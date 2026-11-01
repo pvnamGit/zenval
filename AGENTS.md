@@ -11,6 +11,8 @@ linked repository files and keep this map short.
 4. For non-trivial work, use [`docs/agent-harness/README.md`](docs/agent-harness/README.md)
    and create an execution plan from [`docs/exec-plans/TEMPLATE.md`](docs/exec-plans/TEMPLATE.md).
    The executable workflow contract is [`docs/agent-harness/graph.json`](docs/agent-harness/graph.json).
+   GitHub Issue routing is constrained by
+   [`docs/agent-harness/task-kinds.json`](docs/agent-harness/task-kinds.json).
 5. For GitHub-Issue-scoped ADLC objectives, read
    [`docs/agent-harness/github-issue-control-plane.md`](docs/agent-harness/github-issue-control-plane.md)
    for the issue contract, lifecycle semantics, and trust boundaries.
