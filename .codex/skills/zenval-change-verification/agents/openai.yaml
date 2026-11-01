@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zenval Change Verification"
+  short_description: "Verify a Zenval change with independent gates"
+  default_prompt: "Use $zenval-change-verification to handle this Zenval task."

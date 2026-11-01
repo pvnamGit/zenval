@@ -33,7 +33,15 @@ pnpm check
 ```
 
 `pnpm check` verifies formatting, Biome lint, architecture dependency rules, strict TypeScript,
-tests, and production builds.
+tests, production builds, and the agent harness structure. For a faster inner loop use
+`pnpm harness:quick`.
+
+## Agent delivery
+
+Start with [`AGENTS.md`](AGENTS.md). Zenval includes native ADLC project agents, repository-scoped
+Codex skills, a machine-validated delivery graph, resumable execution-plan templates, bounded repair
+loops, and a pull-request rail guard. See
+[`docs/agent-harness/README.md`](docs/agent-harness/README.md) for setup and operation.
 
 ## Repository map
 

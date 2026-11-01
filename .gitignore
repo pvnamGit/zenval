@@ -10,3 +10,19 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
+
+# ADLC runtime
+.adlc/*
+!.adlc/config.json
+!.adlc/tickets.json
+!.adlc/tickets/
+!.adlc/tickets/**
+!.adlc/ticket-archive/
+!.adlc/ticket-archive/**
+!.adlc/specs/
+!.adlc/manifest.jsonl
+!.adlc/manifest.d/
+!.adlc/manifest.d/**
+.adlc/manifest.d/.lineage
+.adlc/manifest.d/*.lock
+.adlc/manifest.d/*.tmp-*

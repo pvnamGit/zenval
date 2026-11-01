@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zenval Financial Correctness"
+  short_description: "Protect financial invariants and auditability"
+  default_prompt: "Use $zenval-financial-correctness to handle this Zenval task."

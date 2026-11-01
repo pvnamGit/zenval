@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zenval ADLC Delivery"
+  short_description: "Plan and execute a bounded Zenval change"
+  default_prompt: "Use $zenval-adlc-delivery to handle this Zenval task."
