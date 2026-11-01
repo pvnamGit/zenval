@@ -36,6 +36,10 @@ Use these lifecycle semantics regardless of the specific label, field, or board 
 - **Blocked**: progress is paused by an external decision, dependency, or missing authorization.
 - **Done**: accepted scoped objective is complete.
 
+Lifecycle values are authoritative workflow state, not author input. Issue authors provide contract
+content only; maintainers/checkers/human approvers perform lifecycle transitions based on observed
+evidence and approvals.
+
 State meaning must keep these outcomes distinct:
 
 - **Agent verification passed**: deterministic or reviewer checks passed for a scoped diff.

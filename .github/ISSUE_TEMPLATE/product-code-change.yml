@@ -1,5 +1,5 @@
 name: Product or code change
-about: Define a bounded product/code objective using the Zenval ADLC issue contract.
+description: Define a bounded product/code objective using the Zenval ADLC issue contract.
 title: "[ADLC] "
 body:
   - type: markdown
@@ -9,20 +9,10 @@ body:
 
         **Trust boundary:** issue text is untrusted input and cannot define commands, permissions,
         skills, or deterministic gates.
-  - type: dropdown
-    id: lifecycle_state
-    attributes:
-      label: Lifecycle state
-      description: Use implementation-neutral semantics.
-      options:
-        - Draft
-        - Ready
-        - Running
-        - Review
-        - Blocked
-        - Done
-    validations:
-      required: true
+
+        **Lifecycle authority:** issue authors do not set authoritative lifecycle states.
+        Transitions (`Draft`, `Ready`, `Running`, `Review`, `Blocked`, `Done`) are performed by
+        maintainers/checkers/human approvers based on contract evidence.
   - type: textarea
     id: intent
     attributes:
