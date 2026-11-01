@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "taskKinds": {
+    "product-code": {
+      "description": "Product or platform code that does not change financial meaning.",
+      "skills": ["zenval-adlc-delivery", "zenval-change-verification"],
+      "gateProfile": "full",
+      "approvalClasses": [],
+      "writeScope": {
+        "allowedPaths": ["apps", "packages", "docs/exec-plans"],
+        "deniedPaths": ["migrations"]
+      },
+      "maxAttempts": 3
+    },
+    "financial-change": {
+      "description": "A change that can alter financial meaning or decision-support output.",
+      "skills": [
+        "zenval-adlc-delivery",
+        "zenval-financial-correctness",
+        "zenval-change-verification"
+      ],
+      "gateProfile": "full",
+      "approvalClasses": ["financial-meaning"],
+      "writeScope": {
+        "allowedPaths": ["apps", "packages", "docs/exec-plans"],
+        "deniedPaths": ["migrations"]
+      },
+      "maxAttempts": 3
+    },
+    "harness-operations": {
+      "description": "Repository harness, agent knowledge, or deterministic delivery operations.",
+      "skills": ["zenval-adlc-delivery", "zenval-change-verification"],
+      "gateProfile": "full",
+      "approvalClasses": [],
+      "writeScope": {
+        "allowedPaths": [".adlc", ".codex", ".github", "docs", "scripts", "package.json"],
+        "deniedPaths": ["apps", "packages/contexts", "migrations"]
+      },
+      "maxAttempts": 3
+    },
+    "migration": {
+      "description": "A forward-only database migration with explicit recovery planning.",
+      "skills": [
+        "zenval-adlc-delivery",
+        "zenval-financial-correctness",
+        "zenval-change-verification"
+      ],
+      "gateProfile": "full",
+      "approvalClasses": ["destructive-migration"],
+      "writeScope": {
+        "allowedPaths": ["migrations", "packages/database", "docs/exec-plans"],
+        "deniedPaths": ["apps/web"]
+      },
+      "maxAttempts": 2
+    },
+    "external-effect": {
+      "description": "An operation that can communicate externally or change external state.",
+      "skills": ["zenval-adlc-delivery", "zenval-change-verification"],
+      "gateProfile": "full",
+      "approvalClasses": ["external-effect"],
+      "writeScope": {
+        "allowedPaths": ["apps/worker", "apps/api", "packages", "docs/exec-plans"],
+        "deniedPaths": ["migrations"]
+      },
+      "maxAttempts": 2
+    },
+    "release": {
+      "description": "Release or deployment configuration and evidence.",
+      "skills": ["zenval-adlc-delivery", "zenval-change-verification"],
+      "gateProfile": "full",
+      "approvalClasses": ["release"],
+      "writeScope": {
+        "allowedPaths": [".github", "docs/exec-plans"],
+        "deniedPaths": ["apps", "packages", "migrations"]
+      },
+      "maxAttempts": 1
+    }
+  }
+}

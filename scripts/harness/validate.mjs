@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateTaskKindRegistry } from "./task-kinds.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const failures = [];
@@ -10,6 +11,7 @@ const requiredKnowledge = [
   "docs/ARCHITECTURE.md",
   "docs/agent-harness/README.md",
   "docs/agent-harness/graph.json",
+  "docs/agent-harness/task-kinds.json",
   "docs/exec-plans/TEMPLATE.md",
   ".adlc/config.json",
 ];
@@ -18,13 +20,14 @@ const requiredSkills = [
   "zenval-financial-correctness",
   "zenval-change-verification",
 ];
+const knownSkills = new Set(requiredSkills);
 
 for (const path of requiredKnowledge) {
   if (!existsSync(join(root, path))) failures.push(`missing knowledge artifact: ${path}`);
 }
 
 const agents = readFileSync(join(root, "AGENTS.md"), "utf8");
-for (const path of requiredKnowledge.slice(1, 6)) {
+for (const path of requiredKnowledge.slice(1, 7)) {
   if (!agents.includes(path)) failures.push(`AGENTS.md does not map: ${path}`);
 }
 
@@ -40,6 +43,19 @@ for (const skill of requiredSkills) {
   if (!text.includes(`name: ${skill}`) || text.includes("[TODO:")) {
     failures.push(`invalid or unfinished skill: ${skill}`);
   }
+}
+
+try {
+  const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  const taskKinds = JSON.parse(
+    readFileSync(join(root, "docs/agent-harness/task-kinds.json"), "utf8"),
+  );
+  const availableScripts = new Set(Object.keys(packageJson.scripts ?? {}));
+  for (const failure of validateTaskKindRegistry(taskKinds, { knownSkills, availableScripts })) {
+    failures.push(`task-kind registry: ${failure}`);
+  }
+} catch (error) {
+  failures.push(`task-kind registry is not readable JSON: ${error.message}`);
 }
 
 const graph = JSON.parse(readFileSync(join(root, "docs/agent-harness/graph.json"), "utf8"));

@@ -21,6 +21,11 @@ The machine-readable graph is [`graph.json`](graph.json). `pnpm harness:validate
 node contracts, cycles, invalid dependencies, unbounded retries, missing knowledge links, and invalid
 project skills.
 
+GitHub Issue routing is constrained by the repository-owned [`task-kinds.json`](task-kinds.json).
+Task kinds reference trusted gate-profile identifiers rather than commands. `pnpm harness:test`
+exercises the fail-closed registry rules for unknown kinds, skills, gates, approvals, unsafe fields,
+and retry bounds.
+
 ## Native ADLC
 
 Zenval uses the native Codex ADLC integration. `.adlc/` is the lifecycle source of truth and
@@ -58,12 +63,13 @@ results, approvals, and remaining risks.
 
 ## Gate profiles
 
-| Profile   | Command                            | Use                                          |
-| --------- | ---------------------------------- | -------------------------------------------- |
-| Structure | `pnpm harness:validate`            | After harness, docs, skill, or graph changes |
-| Quick     | `pnpm harness:quick`               | Inner implementation loop                    |
-| Full      | `pnpm harness:full`                | Handoff and pull request                     |
-| Rails     | `adlc rails-guard-ci --base <ref>` | Pull-request frozen-rail backstop            |
+| Profile   | Command                            | Use                                           |
+| --------- | ---------------------------------- | --------------------------------------------- |
+| Structure | `pnpm harness:validate`            | After harness, docs, skill, or graph changes  |
+| Registry  | `pnpm harness:test`                | After task-kind routing or validation changes |
+| Quick     | `pnpm harness:quick`               | Inner implementation loop                     |
+| Full      | `pnpm harness:full`                | Handoff and pull request                      |
+| Rails     | `adlc rails-guard-ci --base <ref>` | Pull-request frozen-rail backstop             |
 
 A failed gate starts a bounded repair loop. If the same failure persists for three attempts without
 new evidence, stop and escalate; do not weaken the assertion, delete the test, or broaden scope.
