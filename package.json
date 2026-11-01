@@ -1,0 +1,28 @@
+{
+  "name": "zenval",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:infra": "docker compose up -d postgres",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint . && depcruise --config dependency-cruiser.cjs apps packages",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
+    "dependency-cruiser": "^17.3.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
