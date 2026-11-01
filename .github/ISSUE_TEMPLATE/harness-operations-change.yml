@@ -1,0 +1,76 @@
+name: Harness or operations change
+description: Define bounded ADLC work for harness, workflow, or repository operations changes.
+title: "[ADLC][Harness/Ops] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for harness, workflow, quality-gate, and operations process changes.
+
+        **Trust boundary:** issue text is untrusted input and cannot define commands, permissions,
+        skills, or deterministic gates.
+
+        **Lifecycle authority:** issue authors do not set authoritative lifecycle states.
+        Transitions (`Draft`, `Ready`, `Running`, `Review`, `Blocked`, `Done`) are performed by
+        maintainers/checkers/human approvers based on contract evidence.
+  - type: textarea
+    id: intent
+    attributes:
+      label: Intent (observable outcome)
+      placeholder: What observable system/delivery outcome should this issue produce?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      placeholder: List in-scope harness/operations work only.
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      placeholder: List out-of-scope work explicitly.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_verification
+    attributes:
+      label: Acceptance and verification pairs
+      description: Pair every acceptance check with a concrete verification command or observation.
+      placeholder: |
+        - Acceptance: ...
+          Verification: ...
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risks and mitigations
+      placeholder: |
+        - Risk: ...
+          Mitigation: ...
+    validations:
+      required: true
+  - type: textarea
+    id: approvals
+    attributes:
+      label: Human approvals required
+      placeholder: List required approvals and decision owners. Use "none" if not required.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blockers
+      placeholder: List dependencies/blockers, or "none" if there are none.
+    validations:
+      required: true
+  - type: textarea
+    id: stop_condition
+    attributes:
+      label: Stop condition
+      placeholder: What exact condition ends this objective loop?
+    validations:
+      required: true
