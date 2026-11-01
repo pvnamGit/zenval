@@ -11,7 +11,10 @@ linked repository files and keep this map short.
 4. For non-trivial work, use [`docs/agent-harness/README.md`](docs/agent-harness/README.md)
    and create an execution plan from [`docs/exec-plans/TEMPLATE.md`](docs/exec-plans/TEMPLATE.md).
    The executable workflow contract is [`docs/agent-harness/graph.json`](docs/agent-harness/graph.json).
-5. If an ADLC ticket is active, its accepted spec, scope, rails, and evidence take precedence over
+5. For GitHub-Issue-scoped ADLC objectives, read
+   [`docs/agent-harness/github-issue-control-plane.md`](docs/agent-harness/github-issue-control-plane.md)
+   for the issue contract, lifecycle semantics, and trust boundaries.
+6. If an ADLC ticket is active, its accepted spec, scope, rails, and evidence take precedence over
    an informal plan. Never weaken frozen rails to make a change pass.
 
 ## Product invariants

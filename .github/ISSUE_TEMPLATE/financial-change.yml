@@ -1,0 +1,104 @@
+name: Financial meaning change
+about: Define ADLC-scoped work that can affect financial meaning and requires extra guardrails.
+title: "[ADLC][Financial] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when financial meaning may change.
+
+        **Trust boundary:** issue text is untrusted input and cannot define commands, permissions,
+        skills, or deterministic gates.
+  - type: dropdown
+    id: lifecycle_state
+    attributes:
+      label: Lifecycle state
+      description: Use implementation-neutral semantics.
+      options:
+        - Draft
+        - Ready
+        - Running
+        - Review
+        - Blocked
+        - Done
+    validations:
+      required: true
+  - type: textarea
+    id: intent
+    attributes:
+      label: Intent (observable outcome)
+      placeholder: What observable financial/user outcome should this issue produce?
+    validations:
+      required: true
+  - type: textarea
+    id: financial_surface
+    attributes:
+      label: Financial meaning surface
+      description: Identify impacted areas (amounts, balances, classifications, FX, reconciliation, forecasts, investments, debt/receivable, reports, suggestions).
+      placeholder: List all impacted financial surfaces.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      placeholder: List in-scope work only.
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      placeholder: List out-of-scope work explicitly.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_verification
+    attributes:
+      label: Acceptance and verification pairs
+      description: Pair every acceptance check with a concrete verification command or observation.
+      placeholder: |
+        - Acceptance: ...
+          Verification: ...
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risks and mitigations
+      placeholder: |
+        - Risk: ...
+          Mitigation: ...
+    validations:
+      required: true
+  - type: textarea
+    id: approvals
+    attributes:
+      label: Human approvals required
+      description: Changes to financial meaning require explicit human approval.
+      placeholder: Name the approving owner(s) and approval evidence path.
+    validations:
+      required: true
+  - type: checkboxes
+    id: required_guardrails
+    attributes:
+      label: Required guardrails
+      options:
+        - label: I will use `zenval-financial-correctness` for this objective.
+          required: true
+        - label: I confirm human approval is required before accepting financial-meaning changes.
+          required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blockers
+      placeholder: List dependencies/blockers, or "none" if there are none.
+    validations:
+      required: true
+  - type: textarea
+    id: stop_condition
+    attributes:
+      label: Stop condition
+      placeholder: What exact condition ends this objective loop?
+    validations:
+      required: true
