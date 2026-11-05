@@ -1,31 +1,41 @@
 /* Zenval standalone prototype. No framework, build step, or financial side effects. */
 import {
-  applyManualValuationsToHoldings,
-  buildReceivableDraft,
-  calculateInvestmentAmounts,
-  commitmentPnlImpact,
-  debtObligations,
-  derivedValues,
-  escapeHtml,
-  financialStates,
-  fixedCommitments,
-  formatUnitPrice,
-  formatVnd,
-  investmentActivities,
-  investmentActivityEffect,
-  investmentHoldings,
-  isEssentialCommitmentPriority,
-  isTodayTransaction,
-  parseVnd,
-  prototypeViews,
-  recordManualValuation,
-  recordsForBucket,
-  resolveView,
-  returnFocusId,
-  shouldOpenGlobalSearch,
-  summarizeTodayCashflow,
-  todayCashflowSummary,
-} from "./model.mjs?v=2026-11-03-1";
+    allocatedGoalPercentage,
+    applyManualValuationsToHoldings,
+    applyPreferenceChange,
+    buildReceivableDraft,
+    calculateInvestmentAmounts,
+    commitmentPnlImpact,
+    createManualInstrumentReview,
+    debtObligations,
+    derivedValues,
+    escapeHtml,
+    financialStates,
+    fixedCommitments,
+    formatUnitPrice,
+    formatVnd,
+    formatVndInput,
+    instrumentsForAssetClass,
+    investmentActivities,
+    investmentActivityEffect,
+    investmentHoldings,
+    isEssentialCommitmentPriority,
+    isTodayTransaction,
+    localTimeHHMM,
+    parseVnd,
+    prototypeViews,
+    recordManualValuation,
+    recordsForBucket,
+    resolveInstrumentSelection,
+    resolveNavigationTarget,
+    resolveView,
+    restoreGoalFormDraft,
+    returnFocusId,
+    shouldOpenGlobalSearch,
+    summarizeTodayCashflow,
+    todayCashflowSummary,
+    validateAllocationPercentages,
+} from "./model.mjs?v=2026-11-04-2";
 
 (() => {
   const root = document.querySelector("#app");
@@ -62,7 +72,7 @@ import {
       quickAdd: "Ghi giao dịch",
       greeting: "Chào buổi sáng, Nam",
       calm: "Bức tranh tiền bạc của bạn đang ổn định.",
-      date: "CHỦ NHẬT · 01 THÁNG 11, 2026",
+      date: "Chủ nhật · 01 tháng 11, 2026",
       todaySummary: "Tổng thu / chi hôm nay",
       todayInflow: "Tổng thu hôm nay",
       todayOutflow: "Tổng chi hôm nay",
@@ -113,7 +123,7 @@ import {
       reviewSubtitle:
         "Xác nhận các mục chuyển khoản, nghi trùng hoặc lệch cam kết trước khi khóa sổ.",
       transferCandidate: "Có thể là chuyển khoản",
-      transferHelp: "Giữa hai tài khoản của bạn — không phải thu nhập hay chi tiêu.",
+      transferHelp: "Giữa hai tài khoản của bạn, không phải thu nhập hay chi tiêu.",
       duplicate: "Có thể trùng lặp",
       duplicateHelp: "Hai giao dịch cùng số tiền và thời điểm gần nhau.",
       variance: "Khác cam kết dự kiến",
@@ -133,7 +143,7 @@ import {
       commitmentsTitle: "Khoản thu/chi cố định & Cam kết hàng tháng",
       commitmentsDesc:
         "Thiết lập các khoản thu định kỳ (lương, phụ cấp) và khoản chi cố định phải dành tiền trước (tiền nhà, hóa đơn, trả góp, tiết kiệm).",
-      createCommitmentBtn: "+ Tạo khoản cố định hàng tháng",
+      createCommitmentBtn: "Tạo khoản cố định hàng tháng",
       recurringInflowLabel: "Tổng thu cố định dự kiến/tháng",
       monthlyBaselineLabel: "Tổng cam kết chi & nghĩa vụ/tháng",
       paidThisMonthLabel: "Đã thanh toán kỳ này",
@@ -160,14 +170,14 @@ import {
       invTabHoldings: "Danh mục & Tài sản (Holdings)",
       invTabActivity: "Nhật ký giao dịch & Quyền (Activity)",
       invTabPerformance: "Hiệu suất & Phân bổ",
-      logInvestmentBtn: "+ Ghi nhật ký đầu tư / Thêm mã",
+      logInvestmentBtn: "Ghi nhật ký đầu tư / Thêm mã",
       debtsTitle: "Công nợ & Khoản phải thu",
       debtsSubtitle:
         "Quản lý khoản vay phải trả, khoản cho vay phải thu (tách Gốc – Lãi – Phí) và mô phỏng lộ trình sạch nợ.",
       debtTabPayables: "Khoản phải trả",
       debtTabReceivables: "Khoản phải thu",
       debtTabSimulation: "Lộ trình & Mô phỏng trả nợ",
-      addDebtBtn: "+ Thêm khoản vay / phải thu",
+      addDebtBtn: "Thêm khoản vay / phải thu",
       planTitle: "Kế hoạch, Mục tiêu & Gợi ý",
       planSubtitle:
         "Giữ đủ cho nghĩa vụ cố định trước khi phân bổ chi linh hoạt, mục tiêu dài hạn và xem gợi ý kiểm chứng.",
@@ -214,7 +224,7 @@ import {
       saveDraft: "Lưu bản nháp",
       save: "Lưu giao dịch",
       transferRail: "Chuyển khoản không được tính là thu nhập hoặc chi tiêu.",
-      prototypeNotice: "Bản mẫu chỉ mô phỏng — không có giao dịch tài chính nào được thực hiện.",
+      prototypeNotice: "Bản mẫu chỉ mô phỏng, không có giao dịch tài chính nào được thực hiện.",
       savedFeedback: "Đã mô phỏng lưu thành công trong phiên làm việc.",
       moreSubtitle: "Truy cập đầy đủ các phân hệ theo kiến trúc thông tin (IA) của Zenval.",
       appearance: "Giao diện",
@@ -242,7 +252,7 @@ import {
       quickAdd: "Add transaction",
       greeting: "Good morning, Nam",
       calm: "Your money picture looks steady today.",
-      date: "SUNDAY · NOVEMBER 01, 2026",
+      date: "Sunday · November 01, 2026",
       todaySummary: "Today's inflow & outflow",
       todayInflow: "Today's total inflow",
       todayOutflow: "Today's total outflow",
@@ -293,7 +303,7 @@ import {
       reviewSubtitle:
         "Confirm transfer candidates, duplicates, and commitment variances before closing.",
       transferCandidate: "Possible transfer",
-      transferHelp: "Between two of your accounts — not income or expense.",
+      transferHelp: "Between two of your accounts, not income or expense.",
       duplicate: "Possible duplicate",
       duplicateHelp: "Two transactions have the same amount and nearby times.",
       variance: "Different from commitment",
@@ -313,7 +323,7 @@ import {
       commitmentsTitle: "Monthly Fixed Income & Expense Commitments",
       commitmentsDesc:
         "Configure recurring monthly income (salary, retainers) and fixed expenses reserved upfront (rent, bills, loan installments, savings).",
-      createCommitmentBtn: "+ Create monthly fixed item",
+      createCommitmentBtn: "Create monthly fixed item",
       recurringInflowLabel: "Expected monthly recurring inflow",
       monthlyBaselineLabel: "Monthly committed outflow baseline",
       paidThisMonthLabel: "Paid this cycle",
@@ -340,14 +350,14 @@ import {
       invTabHoldings: "Portfolios / holdings",
       invTabActivity: "Activity / corporate actions",
       invTabPerformance: "Performance / allocation",
-      logInvestmentBtn: "+ Log investment / holding",
+      logInvestmentBtn: "Log investment / holding",
       debtsTitle: "Debts & Receivables",
       debtsSubtitle:
         "Track payables and receivables with Principal–Interest–Fee splits, recoverable value, and payoff simulation.",
       debtTabPayables: "Payables",
       debtTabReceivables: "Receivables",
       debtTabSimulation: "Timeline / simulation",
-      addDebtBtn: "+ Add payable / receivable",
+      addDebtBtn: "Add payable / receivable",
       planTitle: "Plan, Goals & Suggestions",
       planSubtitle:
         "Reserve fixed obligations before planning flexible spending, financial goals, and explainable suggestions.",
@@ -394,7 +404,7 @@ import {
       saveDraft: "Save draft",
       save: "Save transaction",
       transferRail: "Transfers are not counted as income or expense.",
-      prototypeNotice: "Prototype only — no financial transaction will be executed.",
+      prototypeNotice: "Prototype only, no financial transaction will be executed.",
       savedFeedback: "Simulated save completed in this session.",
       moreSubtitle: "Access all modules across Zenval's Information Architecture.",
       appearance: "Appearance",
@@ -409,11 +419,13 @@ import {
 
   const state = {
     locale: stored("locale", "vi") === "en" ? "en" : "vi",
+    baseCurrency: stored("base-currency", "VND"),
     theme: stored("theme", matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
     view: resolveView(location.hash.slice(1), stored("view", "home")),
     homeSub: "all",
     reviewBucket: "review",
     txSub: "ledger",
+    ledgerFilter: "all",
     commitmentFilter: "all",
     commitmentDirection: "outflow",
     accSub: "cashBank",
@@ -435,8 +447,13 @@ import {
     customHoldings: [],
     customActivities: [],
     customDebts: [],
+    customGoals: [],
+    customReviews: [],
     customTransactions: [],
     customValuations: {},
+    deviceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    timezoneMode: stored("timezone-mode", "device"),
+    editingGoalId: null,
     investmentEntryMode: "unit",
     formDrafts: {},
     notificationSettings: {
@@ -506,7 +523,7 @@ import {
   };
   const heading = (title, subtitle, eyebrow = "", actionHtml = "") => `
     <header class="page-heading page-heading-bar">
-      <div>${eyebrow && !eyebrow.startsWith("IA ·") ? `<p class="eyebrow">${eyebrow}</p>` : ""}<h1>${title}</h1><p>${subtitle}</p></div>
+      <div>${eyebrow && !eyebrow.startsWith("IA ·") ? `<p class="page-meta">${eyebrow}</p>` : ""}<h1>${title}</h1><p>${subtitle}</p></div>
       ${actionHtml ? `<div class="heading-actions">${actionHtml}</div>` : ""}
     </header>`;
 
@@ -543,9 +560,9 @@ import {
           <main class="content" id="main-content" tabindex="-1">${renderView()}</main>
         </div>
         <nav class="mobile-nav" ${state.dialog ? "inert" : ""} aria-label="${vi() ? "Điều hướng di động" : "Mobile navigation"}">
-          ${mobileButton("home", "home")}${mobileButton("transactions", "arrows", "3")}
+          ${mobileButton("home", "home")}${mobileButton("transactions", "arrows")}
           <button class="mobile-add" id="mobile-quick-add" data-action="quick-add" data-surface="mobile" aria-label="${t("quickAdd")}">${icon("plus")}</button>
-          ${mobileButton("plan", "plan")}${mobileButton("more", "more")}
+          ${mobileButton("plan", "plan")}${mobileButton("more", "more", "3")}
         </nav>
         ${state.dialog ? renderDialog() : ""}${state.toast ? `<div class="toast" role="status">${icon("check")}${state.toast}</div>` : ""}
       </div>`;
@@ -556,7 +573,7 @@ import {
   }
   function mobileButton(id, ico, badge = "") {
     const label = id === "more" ? t("more") : t(id);
-    return `<button class="${state.view === id ? "active" : ""}" data-view="${id}"><span class="mobile-icon-wrap">${icon(ico)}${badge ? `<i>${badge}</i>` : ""}</span><span>${label}</span></button>`;
+    return `<button class="${state.view === id ? "active" : ""}" data-view="${id}" ${state.view === id ? 'aria-current="page"' : ""}><span class="mobile-icon-wrap">${icon(ico)}${badge ? `<i>${badge}</i>` : ""}</span><span>${label}</span></button>`;
   }
   function localeControl() {
     return `<div class="segmented compact" aria-label="${t("language")}">${["vi", "en"].map((locale) => `<button class="${state.locale === locale ? "selected" : ""}" data-locale="${locale}" aria-pressed="${state.locale === locale}">${locale.toUpperCase()}</button>`).join("")}</div>`;
@@ -600,204 +617,70 @@ import {
   }
 
   /* ==========================================================================
-   * 1. HOME VIEW (#home) — First dashboard has Today's Inflow/Outflow + IA sections
+   * 1. HOME VIEW (#home) — Today's spending and explainable financial health
    * ========================================================================== */
   function homeView() {
     const todaySummary = currentTodaySummary();
-    const subItems = [
-      ["all", t("homeSubAll")],
-      ["today", t("homeSubToday")],
-      ["picture", t("homeSubPicture")],
-      ["planSummary", t("homeSubPlan")],
-    ];
-    const showToday = state.homeSub === "all" || state.homeSub === "today";
-    const showPicture = state.homeSub === "all" || state.homeSub === "picture";
-    const showPlan = state.homeSub === "all" || state.homeSub === "planSummary";
-
+    const todayExpenseCount = todaySummary.entries.filter(
+      (entry) => entry.kind === "expense" && entry.pnlImpact !== false,
+    ).length;
     return `${heading(
       t("greeting"),
-      t("calm"),
+      vi()
+        ? "Chi tiêu hôm nay và sức khỏe tài chính của bạn."
+        : "Today's spending and your financial health.",
       t("date"),
-      `<button class="secondary-button" id="open-commitment-home" data-action="open-commitments">${icon("calendar")}<span>${vi() ? "Khoản cố định tháng" : "Monthly commitments"}</span></button>
-       <button class="secondary-button" id="open-investment-home" data-view="investments">${icon("trend")}<span>${t("investments")}</span></button>`,
     )}
-    ${subNav(subItems, state.homeSub, "home-sub")}
-    <section class="dashboard-grid" aria-label="${vi() ? "Tổng quan tài chính" : "Financial overview"}">
-      ${
-        showToday
-          ? `
-      <!-- FIRST DASHBOARD ON #HOME: TODAY'S INFLOW & OUTFLOW SUMMARY -->
-      <article class="card today-flow-card" id="home-today-cashflow" ${derivedAttrs("todayCashflow")}>
-        <div class="card-top">
+    <section class="home-minimal" aria-label="${vi() ? "Chi tiêu hôm nay và sức khỏe tài chính" : "Today's spending and financial health"}">
+      <article class="card home-spending-card" ${derivedAttrs("todayCashflow")}>
+        <div class="card-top"><div><span class="card-label">${vi() ? "Đã chi hôm nay" : "Spent today"}</span>${status(derivedValues.todayCashflow.state)}</div><button class="icon-button subtle" id="explain-today" data-action="explain" data-derived="todayCashflow" data-surface="today" aria-label="${t("explain")}">${icon("info")}</button></div>
+        <p class="hero-amount">${todaySummary.outflowDisplay.replace(/^−/, "")} </p>
+        <p class="home-hero-summary">${vi() ? `${todayExpenseCount} khoản chi đã ghi sổ · Cập nhật ${todaySummary.asOf.slice(11, 16)}` : `${todayExpenseCount} posted expenses · Updated ${todaySummary.asOf.slice(11, 16)}`}</p>
+        <div class="today-spending-facts">
+          <span><small>${vi() ? "Thu vào hôm nay" : "Today's income"}</small><strong class="positive-text">${todaySummary.inflowDisplay}</strong></span>
+          <span><small>${vi() ? "Chênh lệch ròng" : "Net movement"}</small><strong class="accent-text">${todaySummary.netDisplay}</strong></span>
+          <span data-pnl-impact="false"><small>${vi() ? "Chuyển khoản nội bộ" : "Internal transfers"}</small><strong>${todaySummary.excludedTransferDisplay}</strong></span>
+        </div>
+        <footer class="safe-footer"><span>${icon("info")}${vi() ? "Chuyển khoản nội bộ và trả gốc nợ không tính là chi tiêu" : "Internal transfers and debt principal are not spending"}</span><button class="text-button" data-view="transactions" data-tx-sub="ledger">${vi() ? "Xem giao dịch" : "View transactions"}${icon("chevron")}</button></footer>
+      </article>
+
+      <article class="card financial-health-card" data-health-summary="positive-cash-low" data-based-on="cashFlow safeToSpend netWorth">
+        <div class="health-heading"><span class="signal-icon calm">${icon("shield")}</span><div><span class="card-label">${vi() ? "Sức khỏe tài chính" : "Financial health"}</span><h2>${vi() ? "Dòng tiền dự kiến vẫn dương" : "Projected cash stays positive"}</h2><p>${vi() ? "Đáy dự kiến 8,2tr ₫ trong 30 ngày tới · Độ tin cậy trung bình." : "Projected low of 8.2m ₫ over 30 days · Medium confidence."}</p></div>${status(derivedValues.cashFlow.state)}</div>
+        <div class="health-evidence">
+          <div ${derivedAttrs("safeToSpend")}><span>${vi() ? "Có thể chi an toàn" : "Safe to spend"}${status(derivedValues.safeToSpend.state)}</span><strong>12.400.000 ₫</strong><button class="icon-button subtle" id="explain-safe" data-action="explain" data-derived="safeToSpend" data-surface="safe" aria-label="${t("explain")}">${icon("info")}</button></div>
+          <div ${derivedAttrs("cashFlow")}><span>${vi() ? "Đáy dòng tiền 30 ngày" : "30-day cash low"}${status(derivedValues.cashFlow.state)}</span><strong>8.200.000 ₫</strong><button class="icon-button subtle" id="explain-cashflow" data-action="explain" data-derived="cashFlow" data-surface="cashflow" aria-label="${t("explain")}">${icon("info")}</button></div>
+          <div ${derivedAttrs("netWorth")}><span>${vi() ? "Tài sản ròng hiện tại" : "Current net worth"}${status(derivedValues.netWorth.state)}</span><strong>292.600.000 ₫</strong><button class="icon-button subtle" id="explain-networth" data-action="explain" data-derived="netWorth" data-surface="networth" aria-label="${t("explain")}">${icon("info")}</button></div>
+        </div>
+        <footer class="health-actions"><button class="text-button" data-view="plan" data-plan-sub="forecast">${vi() ? "Xem dự báo" : "View forecast"}${icon("chevron")}</button><button class="text-button" data-view="reports" data-report-sub="netWorthBridge">${vi() ? "Xem tài sản ròng" : "View net worth"}${icon("chevron")}</button></footer>
+      </article>
+
+      <article class="card home-attention">
+        <div class="attention-heading">
+          <span class="signal-icon amber">${icon("review")}</span>
           <div>
-            <span class="card-label">${t("todaySummary")} · 01/11/2026</span>
-            ${status("posted")}
+            <span class="card-label">${vi() ? "Cần chú ý" : "Needs attention"}</span>
+            <h2>${vi() ? "Hai việc, không có việc khẩn cấp" : "Two items, nothing urgent"}</h2>
+            <p>${vi() ? "Xác nhận hộp thư và kiểm tra khoản cố định sắp đến hạn." : "Confirm inbox items and review upcoming fixed commitments."}</p>
           </div>
-          <div class="card-top-actions">
-            <button class="secondary-button compact-btn" data-action="quick-add" data-surface="top">${icon("plus")}<span>${t("addTodayTx")}</span></button>
-            <button class="icon-button subtle" id="explain-today" data-action="explain" data-derived="todayCashflow" data-surface="today" aria-label="${t("explain")}">${icon("info")}</button>
-          </div>
+          <span class="status pending"><i></i>${vi() ? "2 mục" : "2 items"}</span>
         </div>
-        <div class="today-kpi-grid">
-          <div class="today-kpi inflow-box" data-today-metric="inflow">
-            <span class="kpi-label">${t("todayInflow")}</span>
-            <strong class="kpi-amount positive-text">${todaySummary.inflowDisplay}</strong>
-            <small>${vi() ? "Các khoản thu đã ghi trong phiên" : "Income items logged in this session"}</small>
-          </div>
-          <div class="today-kpi outflow-box" data-today-metric="outflow">
-            <span class="kpi-label">${t("todayOutflow")}</span>
-            <strong class="kpi-amount negative-text">${todaySummary.outflowDisplay}</strong>
-            <small>${vi() ? "Các khoản chi đã ghi trong phiên" : "Expense items logged in this session"}</small>
-          </div>
-          <div class="today-kpi net-box" data-today-metric="net">
-            <span class="kpi-label">${t("todayNet")}</span>
-            <strong class="kpi-amount accent-text">${todaySummary.netDisplay}</strong>
-            <small>${vi() ? "Cập nhật 12:15 · Đã đối chiếu" : "Updated 12:15 · Reconciled"}</small>
-          </div>
-          <div class="today-kpi excluded-box" data-pnl-impact="false">
-            <span class="kpi-label">${t("todayExcluded")}</span>
-            <strong class="kpi-amount">${todaySummary.excludedTransferDisplay}</strong>
-            <small>${vi() ? "VCB → MoMo · Không tính là thu/chi" : "VCB → MoMo · Not P&L"}</small>
-          </div>
-        </div>
-        <div class="today-entries-wrap">
-          <div class="section-title">
-            <h3>${t("todayBreakdown")}</h3>
-            <button class="text-button" data-view="transactions">${t("viewAllTx")}${icon("chevron")}</button>
-          </div>
-          <div class="today-entry-list">
-            ${todaySummary.entries
-              .map(
-                (entry) => `
-              <div class="today-entry-row" data-record-kind="${entry.kind}" data-pnl-impact="${entry.pnlImpact}">
-                <span class="entry-time">${entry.time}</span>
-                <div class="entry-main">
-                  <strong>${vi() ? entry.titleVi : entry.titleEn}</strong>
-                  <small>${entry.account} · ${vi() ? entry.categoryVi : entry.categoryEn}</small>
-                </div>
-                ${status(entry.state)}
-                <strong class="entry-amount ${entry.kind === "income" ? "positive-text" : entry.kind === "expense" ? "negative-text" : ""}">${entry.amount}</strong>
-              </div>`,
-              )
-              .join("")}
-          </div>
-        </div>
-        <footer class="safe-footer">
-          <span>${icon("info")}${t("todayRailNote")}</span>
-          <button class="text-button" id="explain-today-footer" data-action="explain" data-derived="todayCashflow" data-surface="today-footer">${t("explain")}${icon("chevron")}</button>
-        </footer>
-      </article>
-
-      <article class="card safe-card" ${derivedAttrs("safeToSpend")}>
-        <div class="card-top"><div><span class="card-label">${t("safe")}</span>${status("estimated")}</div><button class="icon-button subtle" id="explain-safe" data-action="explain" data-derived="safeToSpend" data-surface="safe" aria-label="${t("explain")}">${icon("info")}</button></div>
-        <p class="hero-amount">12.400.000 <small>₫</small></p><p class="muted">${t("nextIncome")}</p>
-        <div class="mini-breakdown">
-          <span><small>${vi() ? "Tiền khả dụng" : "Liquid cash"}</small><strong>24,95tr ₫</strong></span>
-          <span><small>${vi() ? "Thu dự kiến thận trọng" : "Conservative inflows"}</small><strong>+12,2tr ₫</strong></span>
-          <span><small>${vi() ? "Cam kết trong kỳ" : "Committed outflows"}</small><strong>−19,75tr ₫</strong></span>
-          <span><small>${vi() ? "Đệm an toàn" : "Safety buffer"}</small><strong>−5,0tr ₫</strong></span>
-        </div>
-        <footer class="safe-footer"><span>${icon("clock")}${t("updated")}</span><button class="text-button" id="explain-safe-footer" data-action="explain" data-derived="safeToSpend" data-surface="safe-footer">${t("explain")}${icon("chevron")}</button></footer>
-      </article>
-
-      <article class="card flow-card" ${derivedAttrs("cashFlow")}>
-        <div class="card-top"><div><span class="card-label">${t("cashFlow")}</span>${status("forecast")}</div><button class="icon-button subtle" id="explain-cashflow" data-action="explain" data-derived="cashFlow" data-surface="cashflow" aria-label="${t("explain")}">${icon("info")}</button></div>
-        <div class="chart-wrap"><svg class="line-chart" viewBox="0 0 500 150" preserveAspectRatio="none" role="img" aria-label="${t("cashFlow")}"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".24"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><path class="grid-line" d="M0 30H500M0 80H500M0 130H500"/><path class="area" d="M0 96C40 90 50 48 95 55s60 29 100 17 55-46 100-32 55 80 105 65 55-37 100-29v74H0Z"/><path class="chart-line" d="M0 96C40 90 50 48 95 55s60 29 100 17 55-46 100-32 55 80 105 65 55-37 100-29"/><circle cx="400" cy="105" r="5"/></svg><div class="chart-labels"><span>01/11</span><span>08/11</span><span>15/11</span><span>30/11</span></div></div>
-        <footer class="chart-summary"><span>${t("low")}<strong>8.200.000 ₫</strong></span><b>${t("confidence")}</b></footer>
-      </article>
-
-      <article class="card due-card">
-        <div class="section-title">
-          <h2>${t("due")}</h2>
-          <div class="inline-actions">
-            <button class="text-button" id="open-commitment-due" data-action="commitment-add" data-surface="due">${t("createCommitmentBtn")}</button>
-            <button class="text-button" data-action="open-commitments">${t("seeAll")}${icon("chevron")}</button>
-          </div>
-        </div>
-        <div class="due-list">
-          ${dueItem("05", "TH11", t("rent"), "8.000.000 ₫", vi() ? "Đã khớp · Chi phí cố định" : "Matched · Fixed expense")}
-          ${dueItem("08", "TH11", t("internet"), "1.250.000 ₫", vi() ? "7 ngày nữa · Dung sai ±15%" : "in 7 days · Tolerance ±15%")}
-          ${dueItem("12", "TH11", t("loan"), "3.500.000 ₫", vi() ? "Gốc 2,8tr không tính vào chi tiêu · Lãi 700k" : "Principal 2.8m (Non-P&L) · Interest 700k")}
-          ${dueItem("15", "TH11", vi() ? "Lương chính công ty (Thu cố định)" : "Primary salary (Fixed inflow)", "+30.000.000 ₫", vi() ? "Dự kiến · Độ tin cậy 95%" : "Expected · 95% confidence")}
+        <div class="attention-list">
+          <button class="attention-item" data-view="review"><span class="attention-icon amber">${icon("review")}</span><span class="attention-copy"><strong>${t("reviewCount")}</strong><small>${t("noCritical")}</small></span><span class="attention-meta"><span class="tag-pill essential">${vi() ? "Hộp thư" : "Inbox"}</span><small>${t("reviewNow")}</small></span>${icon("chevron")}</button>
+          <button class="attention-item" data-action="open-commitments"><span class="attention-icon">${icon("calendar")}</span><span class="attention-copy"><strong>${vi() ? "Internet đến hạn sau 7 ngày" : "Internet due in 7 days"}</strong><small>${vi() ? "Cam kết cố định · Đến hạn 08/11 · Đã giữ trong kế hoạch" : "Fixed commitment · Due Nov 08 · Reserved in plan"}</small></span><span class="attention-meta"><strong>1.250.000 ₫</strong><small>${vi() ? "Còn 7 ngày" : "In 7 days"}</small></span>${icon("chevron")}</button>
         </div>
       </article>
 
-      <article class="card review-card">
-        <div class="review-illustration">${icon("review")}</div>
-        <div>${status("pending")}<h2>${t("reviewCount")}</h2><p>${t("noCritical")}</p></div>
-        <button class="secondary-button" data-view="review">${t("reviewNow")}${icon("chevron")}</button>
-      </article>`
-          : ""
-      }
-
-      ${
-        showPicture
-          ? `
-      <article class="card worth-card" ${derivedAttrs("netWorth")}>
-        <div class="card-top">
-          <div><span class="card-label">${t("netWorth")}</span><span class="positive">${t("monthChange")}</span></div>
-          <button class="icon-button subtle" id="explain-networth" data-action="explain" data-derived="netWorth" data-surface="networth" aria-label="${t("explain")}">${icon("info")}</button>
-        </div>
-        <p class="large-amount">292.600.000 <small>₫</small></p>
-        <div class="worth-bar" role="img" aria-label="${t("assets")} 319,6tr; ${t("receivablesNet")} 6,5tr; ${t("liabilities")} 33,5tr"><span></span><i></i></div>
-        <div class="worth-legend">
-          <span><i class="asset-dot"></i>${t("assets")} (Tiền 211,6tr + Đầu tư 108,0tr)<strong>319,6tr ₫</strong></span>
-          <span><i class="flex-dot"></i>${t("receivablesNet")} (Gốc 10tr × 65%)<strong>6,5tr ₫</strong></span>
-          <span><i class="liability-dot"></i>${t("liabilities")} (Vay VIB 30tr + Thẻ 3,5tr)<strong>−33,5tr ₫</strong></span>
-        </div>
-        <div class="bridge-strip">
-          <strong>${t("nwBridgeTitle")}:</strong>
-          <span>${vi() ? "Thặng dư thu/chi tháng" : "Monthly net P&L"}: <b>+13.625.000 ₫</b></span>
-          <span>${vi() ? "Biến động giá đầu tư" : "Investment market move"}: <b>+1.625.000 ₫</b></span>
-        </div>
-        <footer class="safe-footer">
-          <div class="inline-actions">
-            <button class="secondary-button compact-btn" data-view="investments">${icon("trend")}<span>${vi() ? "Xem danh mục đầu tư (108tr)" : "View investments (108m)"}</span></button>
-            <button class="secondary-button compact-btn" data-view="debts">${icon("scale")}<span>${vi() ? "Xem công nợ & phải thu" : "View debts & receivables"}</span></button>
-          </div>
-          <button class="text-button" data-view="reports">${vi() ? "Báo cáo cầu nối tài sản" : "Net-worth bridge report"}${icon("chevron")}</button>
-        </footer>
-      </article>`
-          : ""
-      }
-
-      ${
-        showPlan
-          ? `
-      <article class="card home-plan-card">
-        <div class="section-title">
-          <h2>${vi() ? "Kế hoạch, Mục tiêu & Gợi ý kiểm chứng" : "Plan, Goals & Explainable Suggestions"}</h2>
-          <button class="text-button" data-view="plan">${vi() ? "Mở Kế hoạch" : "Open Plan"}${icon("chevron")}</button>
-        </div>
-        <div class="home-plan-columns">
-          <div class="mini-panel">
-            <h3>${vi() ? "Tiến độ mục tiêu (Goals)" : "Goals progress"}</h3>
-            <p class="muted">${vi() ? "Liên kết tài khoản thật · Không tính trùng số dư" : "Linked to real accounts · Overlap guarded"}</p>
-            <div class="goal-mini-row"><span>${vi() ? "Quỹ dự phòng 6 tháng" : "6-month emergency fund"}</span><strong>90tr / 120tr ₫ (75%)</strong></div>
-            <div class="goal-mini-row"><span>${vi() ? "Quỹ tích sản đầu tư FPT/DCDS" : "Long-term investment goal"}</span><strong>86,8tr / 150tr ₫ (58%)</strong></div>
-          </div>
-          <div class="mini-panel">
-            <h3>${vi() ? "Gợi ý có thể kiểm chứng (Suggestion)" : "Explainable suggestion"}</h3>
-            <p class="muted">${vi() ? "Phát hiện: Dòng tiền sau ngày 16/11 dư 4,2tr trên mức đệm." : "Detection: Post-Nov 16 cash exceeds buffer by 4.2m ₫."}</p>
-            <p class="muted"><strong>${vi() ? "Đề xuất:" : "Action:"}</strong> ${vi() ? "Trả thêm 2.000.000 ₫ gốc vay VIB để rút ngắn 4 tháng trả nợ (Tiết kiệm ~2,45tr lãi)." : "Add 2,000,000 ₫ extra principal to VIB loan to finish 4 months earlier."}</p>
-            <button class="secondary-button compact-btn" data-action="jump-suggestions">${vi() ? "Xem bằng chứng & Tạo bản nháp" : "Inspect evidence & Draft"}</button>
-          </div>
-        </div>
-      </article>`
-          : ""
-      }
     </section>`;
-  }
-
-  function dueItem(day, month, title, amount, meta) {
-    return `<div class="due-item"><span class="date-tile"><strong>${day}</strong><small>${month}</small></span><span><strong>${title}</strong><small>${meta}</small></span><strong class="due-amount">${amount}</strong></div>`;
   }
 
   /* ==========================================================================
    * 2. TO REVIEW INBOX (#review)
    * ========================================================================== */
   function reviewView() {
-    const items = recordsForBucket(state.reviewBucket);
+    const items = [
+      ...(state.reviewBucket === "review" ? state.customReviews : []),
+      ...recordsForBucket(state.reviewBucket),
+    ];
     return `${heading(t("reviewTitle"), t("reviewSubtitle"))}${filters(["review", "pending", "posted"], state.reviewBucket, "review-filter")}
       <section class="review-list">${items.map(reviewItem).join("")}</section>`;
   }
@@ -814,6 +697,15 @@ import {
       variance: [t("variance"), t("varianceHelp"), "pending", t("inspect"), "info"],
       expected: [t("base"), t("forecastNote"), "forecast", t("inspect"), "clock"],
       expense: [t("posted"), t("updated"), "posted", t("inspect"), "check"],
+      manualInstrument: [
+        vi() ? "Tài sản thủ công cần mapping" : "Manual instrument needs mapping",
+        vi()
+          ? "Xác nhận định danh, loại tài sản và nguồn giá trước khi dùng trong báo cáo."
+          : "Confirm identity, asset class, and price source before reports use it.",
+        "pending",
+        t("inspect"),
+        "info",
+      ],
     };
     const [, help, kind, action, ico] = configs[item.kind];
     const name =
@@ -821,7 +713,7 @@ import {
     return `<article class="review-item" data-record-kind="${item.kind}" ${item.kind === "transfer" ? 'data-pnl-impact="false"' : ""}><span class="review-icon">${icon(ico)}</span><div class="review-content">${status(kind)}<h2>${name}</h2><p>${help}</p></div><strong class="review-amount">${item.amount}</strong><button class="secondary-button" data-demo="${item.id}">${action}</button></article>`;
   }
   function filters(items, active, action) {
-    return `<div class="filter-row">${items.map((item) => `<button class="filter ${active === item ? "active" : ""}" data-action="${action}" data-value="${item}">${t(item)}${item === "review" ? " <span>3</span>" : ""}</button>`).join("")}</div>`;
+    return `<div class="filter-row">${items.map((item) => `<button class="filter ${active === item ? "active" : ""}" data-action="${action}" data-value="${item}" aria-pressed="${active === item}">${t(item)}${item === "review" ? " <span>3</span>" : ""}</button>`).join("")}</div>`;
   }
 
   /* ==========================================================================
@@ -841,8 +733,7 @@ import {
       t("transactions"),
       t("transactionSubtitle"),
       "IA · TRANSACTIONS",
-      `<button class="secondary-button" id="open-commitment-main" data-action="commitment-add" data-surface="main">${icon("calendar")}<span>${t("createCommitmentBtn")}</span></button>
-       <button class="primary-button" data-action="quick-add" data-surface="top">${icon("plus")}<span>${t("quickAdd")}</span></button>`,
+      `<button class="secondary-button" id="open-commitment-main" data-action="commitment-add" data-surface="main">${icon("calendar")}<span>${t("createCommitmentBtn")}</span></button>`,
     )}
     ${subNav(tabs, state.txSub, "tx-sub")}
     ${state.txSub === "commitments" ? commitmentsSection() : state.txSub === "imports" ? importsSection() : ledgerSection()}`;
@@ -906,8 +797,13 @@ import {
         "false",
       ],
     ];
-    return `${filters(["all", "posted", "pending"], "all", "demo-filter")}
-      <section class="review-list">${rows
+    const filteredRows = rows.filter(([, , , kind]) => {
+      if (state.ledgerFilter === "posted") return kind === "posted";
+      if (state.ledgerFilter === "pending") return kind === "pending" || kind === "forecast";
+      return true;
+    });
+    return `${filters(["all", "posted", "pending"], state.ledgerFilter, "ledger-filter")}
+      <section class="review-list">${filteredRows
         .map(
           ([name, meta, amount, kind, pnl]) =>
             `<article class="transaction-row" data-pnl-impact="${pnl}"><span class="transaction-icon">${icon("arrows")}</span><span class="transaction-copy"><strong>${name}</strong><small>${meta}</small></span>${status(kind)}<strong class="transaction-amount">${amount}</strong></article>`,
@@ -934,7 +830,6 @@ import {
               ${status("estimated")}
             </div>
             <div class="inline-actions">
-              <button class="primary-button" id="open-commitment-card" data-action="commitment-add" data-surface="card">${icon("plus")}<span>${t("createCommitmentBtn")}</span></button>
               <button class="icon-button subtle" id="explain-commitments" data-action="explain" data-derived="commitmentBaseline" data-surface="commitments" aria-label="${t("explain")}">${icon("info")}</button>
             </div>
           </div>
@@ -1177,7 +1072,6 @@ import {
           ${status("estimated")}
         </div>
         <div class="inline-actions">
-          <button class="secondary-button compact-btn" id="open-investment-card" data-action="investment-add" data-surface="card">${t("logInvestmentBtn")}</button>
           <button class="icon-button subtle" id="explain-portfolio" data-action="explain" data-derived="portfolioTotal" data-surface="portfolio" aria-label="${t("explain")}">${icon("info")}</button>
         </div>
       </div>
@@ -1467,9 +1361,11 @@ import {
   }
 
   function planStsSection() {
-    return `<div class="plan-grid"><article class="card plan-overview" ${derivedAttrs("safeToSpend")}><div class="card-top"><span class="card-label">${t("safe")}</span><button class="icon-button subtle" id="explain-plan" data-action="explain" data-derived="safeToSpend" data-surface="plan" aria-label="${t("explain")}">${icon("info")}</button></div><p class="hero-amount">12.400.000 <small>₫</small></p><div class="allocation-bar"><span></span><i></i><b></b></div><div class="allocation-list"><span><i class="asset-dot"></i>${t("reserved")}<strong>11.750.000 ₫</strong></span><span><i class="flex-dot"></i>${t("flexible")}<strong>12.400.000 ₫</strong></span><span><i class="buffer-dot"></i>${t("buffer")}<strong>5.000.000 ₫</strong></span></div></article><article class="card assumption-card"><div class="notice">${icon("info")}<p>${t("forecastNote")}</p></div><h2>${t("source")}</h2>${assumptions()
+    return `<div class="plan-grid"><article class="card plan-overview" ${derivedAttrs("safeToSpend")}><div class="card-top"><span class="card-label">${t("safe")}</span><button class="icon-button subtle" id="explain-plan" data-action="explain" data-derived="safeToSpend" data-surface="plan" aria-label="${t("explain")}">${icon("info")}</button></div><p class="hero-amount">12.400.000 <small>₫</small></p><div class="allocation-bar"><span></span><i></i><b></b></div><div class="allocation-list"><span><i class="asset-dot"></i>${t("reserved")}<strong>11.750.000 ₫</strong></span><span><i class="flex-dot"></i>${t("flexible")}<strong>12.400.000 ₫</strong></span><span><i class="buffer-dot"></i>${t("buffer")}<strong>5.000.000 ₫</strong></span></div><footer class="safe-footer"><span>${t("horizon")}</span><span>${t("version")}</span></footer></article><article class="card assumption-card"><div class="notice">${icon("info")}<p>${t("forecastNote")}</p></div><h2>${t("source")}</h2>${assumptions()
       .map(([label, value]) => assumption(label, value))
-      .join("")}</article></div>`;
+      .join(
+        "",
+      )}</article><article class="card"><div class="card-top"><div><span class="card-label">${vi() ? "Tỷ lệ cá nhân hóa · Bản nháp v1" : "Personal allocation · Draft v1"}</span><h2>${vi() ? "Chi tiêu · Tiết kiệm · Đầu tư · Nợ" : "Spending · Saving · Investing · Debt"}</h2></div></div><p class="muted">${vi() ? "50/30/20 chỉ là mẫu khởi đầu. Sửa mọi bucket; tổng phải bằng 100%. Lưu chỉ tạo plan draft có thể đổi lại." : "50/30/20 is only a starting template. Edit every bucket; the total must equal 100%. Saving creates an editable plan draft."}</p><div class="form-grid"><label><span class="form-label">${vi() ? "Thiết yếu" : "Needs"}</span><input id="allocation-needs" type="number" min="0" max="100" value="${draft("allocation-needs", "50")}"/></label><label><span class="form-label">${vi() ? "Mong muốn" : "Wants"}</span><input id="allocation-wants" type="number" min="0" max="100" value="${draft("allocation-wants", "20")}"/></label><label><span class="form-label">${vi() ? "Tiết kiệm" : "Saving"}</span><input id="allocation-saving" type="number" min="0" max="100" value="${draft("allocation-saving", "15")}"/></label><label><span class="form-label">${vi() ? "Đầu tư" : "Investing"}</span><input id="allocation-investing" type="number" min="0" max="100" value="${draft("allocation-investing", "10")}"/></label><label><span class="form-label">${vi() ? "Trả nợ thêm" : "Extra debt"}</span><input id="allocation-debt" type="number" min="0" max="100" value="${draft("allocation-debt", "5")}"/></label><label><span class="form-label">${vi() ? "Hiệu lực từ" : "Effective date"}</span><input id="allocation-effective-date" type="date" value="${draft("allocation-effective-date", "2026-12-01")}"/></label></div><div class="inline-note">${icon("info")}<span>${vi() ? "Preview: thay đổi tỷ lệ chỉ phân bổ thu nhập kế hoạch tương lai; không sửa giao dịch hoặc tự chuyển tiền." : "Preview: ratios allocate future planned income only; they do not edit transactions or move money."}</span></div><button class="secondary-button compact-btn" data-action="save-allocation">${icon("check")}<span>${vi() ? "Lưu bản nháp tỷ lệ" : "Save ratio draft"}</span></button></article></div>`;
   }
 
   function planGoalsSection() {
@@ -1501,10 +1397,11 @@ import {
         "posted",
       ],
     ];
-    return `<section class="review-list">${goals
+    const allGoals = [...state.customGoals, ...goals];
+    return `<div class="section-actions"><button class="primary-button" id="open-goal-main" data-action="goal-add" data-surface="main">${icon("plus")}<span>${vi() ? "Thêm mục tiêu" : "Add goal"}</span></button></div><section class="review-list">${allGoals
       .map(
-        ([title, progress, meta, st]) =>
-          `<article class="review-item"><span class="review-icon">${icon("plan")}</span><div class="review-content">${status(st)}<h2>${title}</h2><p>${meta}</p></div><strong class="review-amount accent-text">${progress}</strong></article>`,
+        ([title, progress, meta, st, id]) =>
+          `<article class="review-item"><span class="review-icon">${icon("plan")}</span><div class="review-content">${status(st)}<h2>${title}</h2><p>${meta}</p>${id ? `<div class="row-actions"><button class="text-button" data-action="goal-edit" data-goal-id="${id}">${vi() ? "Chỉnh sửa" : "Edit"}</button><button class="text-button" data-action="goal-pause" data-goal-id="${id}">${vi() ? "Tạm dừng" : "Pause"}</button><button class="text-button" data-action="goal-archive" data-goal-id="${id}">${vi() ? "Lưu trữ" : "Archive"}</button></div>` : ""}</div><strong class="review-amount accent-text">${progress}</strong></article>`,
       )
       .join("")}</section>`;
   }
@@ -1548,7 +1445,7 @@ import {
           ]
             .map(
               ([val, label]) =>
-                `<button class="filter ${state.forecastScenario === val ? "active" : ""}" data-action="forecast-scenario" data-value="${val}">${label}</button>`,
+                `<button class="filter ${state.forecastScenario === val ? "active" : ""}" data-action="forecast-scenario" data-value="${val}" aria-pressed="${state.forecastScenario === val}">${label}</button>`,
             )
             .join("")}
         </div>
@@ -1577,13 +1474,13 @@ import {
             <div class="review-content">
               <div class="badge-group">
                 ${status("estimated")}
-                <span class="tag-pill">${vi() ? "Độ tin cậy: Cao · Кịch bản trả nợ" : "Confidence: High · Debt plan"}</span>
+                <span class="tag-pill">${vi() ? "Độ tin cậy: Cao · Kịch bản trả nợ" : "Confidence: High · Debt plan"}</span>
               </div>
               <h2>${vi() ? "Tăng trả gốc khoản vay VIB thêm 2.000.000 ₫/tháng sau ngày nhận lương 15/11" : "Increase VIB loan principal payment by 2,000,000 ₫/month after Nov 15 payday"}</h2>
               <p><strong>1. ${vi() ? "Phát hiện" : "Detection"}:</strong> ${vi() ? "Dòng tiền ròng sau cam kết cố định trong 2 tháng qua dư trung bình 6.400.000 ₫/tháng." : "Net cash after fixed commitments averaged +6,400,000 ₫/mo over the last 2 cycles."}</p>
               <p><strong>2. ${vi() ? "Vì sao" : "Reason"}:</strong> ${vi() ? "Lãi vay VIB (9,2%/năm) cao hơn lãi tiền gửi ngắn hạn (5,4%/năm), trong khi Quỹ dự phòng đã đạt 75%." : "VIB loan APR (9.2%) exceeds term-deposit yield (5.4%), while emergency fund is at 75%."}</p>
               <p><strong>3. ${vi() ? "Tác động dự kiến" : "Expected impact"}:</strong> ${vi() ? "Tất toán sớm 4 tháng (12/05/2027), tiết kiệm ~2.450.000 ₫ tiền lãi, vẫn giữ nguyên đệm 5.000.000 ₫." : "Finish 4 months earlier (May 2027), save ~2,450,000 ₫ interest, keep 5m buffer intact."}</p>
-              <p><small>source_ids: obl-vib-loan, commit-loan, sts-v1.0 · snapshot: 2026-11-01T08:30</small></p>
+              <p><small>${vi() ? "Nguồn đối chiếu: Khoản vay VIB, Cam kết trả góp tháng, Công thức STS v1.0 · Cập nhật 08:30 01/11/2026" : "Based on: VIB loan profile, Monthly installment commitment, STS v1.0 · Snapshot Nov 01, 2026 08:30"}</small></p>
             </div>
             <div class="inline-actions">
               <button class="primary-button compact-btn" data-demo="apply-suggestion">${vi() ? "Áp dụng vào kế hoạch (Bản nháp)" : "Apply to plan (Draft)"}</button>
@@ -1651,7 +1548,31 @@ import {
             <small>${vi() ? "Trả gốc VIB 2,8tr · Mua FPT 13,2tr · Gửi tiết kiệm 5tr" : "Principal 2.8m · Equity buy 13.2m · Savings 5m"}</small>
           </div>
         </div>
-      </article>`;
+      </article>
+      <div class="plan-grid" style="margin-top:16px">
+        <article class="card">
+          <h2>${vi() ? "Chi tiết nguồn thu & nhóm chi tháng 10/2026" : "October 2026 Income & Expense Breakdown"}</h2>
+          <div class="formula-list" style="margin-top:12px">
+            <div class="assumption"><span>${vi() ? "Lương chính công ty" : "Primary monthly salary"}<small>${vi() ? "Vietcombank · Đã ghi sổ 15/10" : "Vietcombank · Posted Oct 15"}</small></span><strong class="positive-text">+30.000.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Hợp đồng bảo trì & Cổ tức tiền mặt FPT" : "Maintenance retainer & FPT cash dividend"}<small>${vi() ? "Dự án 5.000.000 ₫ · Cổ tức ròng 475.000 ₫" : "Retainer 5,000,000 ₫ · Net dividend 475,000 ₫"}</small></span><strong class="positive-text">+5.475.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Cam kết cố định (Thuê nhà, Điện nước, Bảo hiểm)" : "Fixed commitments (Rent, Utilities, Insurance)"}<small>${vi() ? "3 danh mục thiết yếu đã tất toán" : "3 essential categories settled"}</small></span><strong class="negative-text">−11.250.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Chi tiêu sinh hoạt linh hoạt (Ăn uống, Di chuyển)" : "Flexible daily living (Groceries, Transport)"}<small>${vi() ? "42 giao dịch đã phân loại" : "42 categorized transactions"}</small></span><strong class="negative-text">−9.900.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Chi phí lãi vay ngân hàng VIB" : "VIB bank loan interest expense"}<small>${vi() ? "Chỉ phần lãi tính vào chi phí P&L" : "Interest portion only counted in P&L"}</small></span><strong class="negative-text">−700.000 ₫</strong></div>
+            <div class="formula-total"><span>${vi() ? "Thặng dư thu/chi ròng tháng 10" : "October net P&L savings"}</span><strong class="positive-text">+13.625.000 ₫</strong></div>
+          </div>
+        </article>
+        <article class="card">
+          <h2>${vi() ? "Dịch chuyển Bảng cân đối tháng 10/2026" : "October 2026 Balance-Sheet Movements"}</h2>
+          <div class="formula-list" style="margin-top:12px">
+            <div class="assumption"><span>${vi() ? "Mua tích sản 100 CP FPT" : "Accumulated 100 FPT shares"}<small>${vi() ? "Tăng giá vốn danh mục đầu tư" : "Increases portfolio cost basis"}</small></span><strong>13.200.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Trích lập Quỹ dự phòng khẩn cấp" : "Emergency fund auto-transfer"}<small>${vi() ? "VCB → Techcombank Savings" : "VCB → Techcombank Savings"}</small></span><strong>5.000.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Trả nợ gốc khoản vay VIB" : "VIB loan principal repayment"}<small>${vi() ? "Giảm dư nợ gốc phải trả" : "Reduces payable principal liability"}</small></span><strong>2.800.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Chuyển khoản thanh khoản nội bộ" : "Internal liquidity transfers"}<small>${vi() ? "VCB ↔ MoMo · Không đổi tài sản ròng" : "VCB ↔ MoMo · Net-worth neutral"}</small></span><strong>12.000.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Thu hồi gốc khoản phải thu" : "Receivable principal collection"}<small>${vi() ? "Kỳ hạn thu hồi dự kiến 25/11/2026" : "Scheduled recovery due Nov 25, 2026"}</small></span><strong>0 ₫</strong></div>
+            <div class="formula-total"><span>${vi() ? "Tác động trực tiếp lên báo cáo Thu/Chi" : "Direct P&L income/expense impact"}</span><strong>0 ₫</strong></div>
+          </div>
+        </article>
+      </div>`;
   }
 
   function reportsBridgeSection() {
@@ -1760,15 +1681,26 @@ import {
   }
 
   function settingsGeneralSection() {
+    const effectiveTimezone =
+      state.timezoneMode === "device" ? state.deviceTimezone : state.timezoneMode;
     return `
       <div class="plan-grid">
         <article class="card">
           <h2>${t("setTabProfile")}</h2>
           <div class="formula-list" style="margin-top:12px">
             <div class="assumption"><span>${t("language")}<small>${vi() ? "Tiếng Việt mặc định · Có tiếng Anh" : "Vietnamese default · English available"}</small></span><div>${localeControl()}</div></div>
-            <div class="assumption"><span>${t("appearance")}<small>${state.theme === "light" ? t("light") : t("dark")}</small></span><button class="secondary-button compact-btn" data-action="theme">${state.theme === "light" ? t("dark") : t("light")}</button></div>
-            <div class="assumption"><span>${vi() ? "Tiền tệ chính" : "Base currency"}<small>${vi() ? "Đổi tiền tệ chính không sửa số tiền gốc của giao dịch" : "Changing base currency never mutates original amounts"}</small></span><strong>VND (₫)</strong></div>
-            <div class="assumption"><span>${vi() ? "Múi giờ & Chu kỳ ngân sách" : "Timezone & Budget cycle"}<small>Asia/Ho_Chi_Minh (UTC+7)</small></span><strong>${vi() ? "Theo tháng dương lịch" : "Calendar month"}</strong></div>
+            <div class="assumption"><span>${t("appearance")}<small>${vi() ? "Mặc định theo hệ điều hành; có thể override" : "Defaults to the operating system; override is optional"}</small></span><div><button class="secondary-button compact-btn" data-action="theme-system">${vi() ? "Theo thiết bị" : "Use device"}</button><button class="secondary-button compact-btn" data-action="theme">${state.theme === "light" ? t("dark") : t("light")}</button></div></div>
+            <label class="assumption"><span>${vi() ? "Tiền tệ chính" : "Base currency"}<small>${vi() ? "Bạn tự chọn; đổi tiền tệ chính không sửa số tiền gốc" : "You choose; changing base currency never mutates original amounts"}</small></span><select id="base-currency-input"><option value="VND" ${state.baseCurrency === "VND" ? "selected" : ""}>VND (₫)</option><option value="USD" ${state.baseCurrency === "USD" ? "selected" : ""}>USD ($)</option><option value="EUR" ${state.baseCurrency === "EUR" ? "selected" : ""}>EUR (€)</option><option value="SGD" ${state.baseCurrency === "SGD" ? "selected" : ""}>SGD (S$)</option></select></label>
+            <label class="assumption"><span>${vi() ? "Múi giờ & Chu kỳ ngân sách" : "Timezone & Budget cycle"}<small>${vi() ? "Theo thiết bị · Không dùng location/IP · Chu kỳ: tháng dương lịch" : "From device · Never inferred from location/IP · Cycle: calendar month"}</small></span><select id="timezone-mode-input"><option value="device" ${state.timezoneMode === "device" ? "selected" : ""}>${vi() ? `Theo thiết bị (${state.deviceTimezone})` : `Use device (${state.deviceTimezone})`}</option><option value="Asia/Ho_Chi_Minh" ${state.timezoneMode === "Asia/Ho_Chi_Minh" ? "selected" : ""}>Asia/Ho_Chi_Minh</option><option value="Asia/Singapore" ${state.timezoneMode === "Asia/Singapore" ? "selected" : ""}>Asia/Singapore</option><option value="UTC" ${state.timezoneMode === "UTC" ? "selected" : ""}>UTC</option></select></label>
+          </div>
+        </article>
+        <article class="card">
+          <h2>${vi() ? "Không gian làm việc & Tài khoản" : "Workspace & Account Summary"}</h2>
+          <div class="formula-list" style="margin-top:12px">
+            <div class="assumption"><span>${vi() ? "Không gian làm việc hiện tại" : "Active workspace"}<small>${vi() ? "Tách biệt hoàn toàn dữ liệu theo workspace_id" : "Strict workspace_id data isolation"}</small></span><strong>ws-personal-nam</strong></div>
+            <div class="assumption"><span>${vi() ? "Tài khoản xác thực" : "Authenticated identity"}<small>${vi() ? "Google Account · Chỉ quyền đăng nhập cơ bản" : "Google Account · Basic sign-in scope only"}</small></span><strong>nam.vu@zenval.vn</strong></div>
+            <div class="assumption"><span>${vi() ? "Múi giờ & Tiền tệ hiệu lực" : "Effective timezone & currency"}<small>${vi() ? "Áp dụng cho đóng sổ tháng và nhắc lịch" : "Used for monthly close and reminders"}</small></span><strong>${state.baseCurrency} · ${effectiveTimezone}</strong></div>
+            <div class="assumption"><span>${vi() ? "Trạng thái dữ liệu & Kiểm toán" : "Data portability & Audit status"}<small>${vi() ? "Sổ cái bất biến · Hỗ trợ xuất JSON/CSV" : "Immutable ledger · JSON/CSV export ready"}</small></span><strong>v1.0</strong></div>
           </div>
         </article>
       </div>`;
@@ -1790,7 +1722,7 @@ import {
     const income = vi()
       ? ["Lương", "Thưởng", "Freelance", "Lãi tiết kiệm", "Cổ tức", "Quà tặng"]
       : ["Salary", "Bonus", "Freelance", "Savings interest", "Dividend", "Gift"];
-    return `<div class="plan-grid"><article class="card"><h2>${vi() ? "Danh mục chi tiêu" : "Expense categories"}</h2><p class="muted">${vi() ? "Danh mục không tự thay đổi loại giao dịch." : "A category never silently changes transaction type."}</p><div class="category-cloud">${expense.map((item) => `<span class="tag-pill">${item}</span>`).join("")}</div><button class="secondary-button compact-btn" data-demo="category-expense">${vi() ? "+ Tạo danh mục chi" : "+ Add expense category"}</button></article><article class="card"><h2>${vi() ? "Danh mục thu nhập" : "Income categories"}</h2><p class="muted">${vi() ? "Tiền vay, thu gốc và chuyển khoản không được coi là thu nhập." : "Borrowing, principal collection, and transfers are not income."}</p><div class="category-cloud">${income.map((item) => `<span class="tag-pill">${item}</span>`).join("")}</div><button class="secondary-button compact-btn" data-demo="category-income">${vi() ? "+ Tạo danh mục thu" : "+ Add income category"}</button></article></div>`;
+    return `<div class="plan-grid"><article class="card"><h2>${vi() ? "Danh mục chi tiêu" : "Expense categories"}</h2><p class="muted">${vi() ? "Danh mục không tự thay đổi loại giao dịch." : "A category never silently changes transaction type."}</p><div class="category-cloud">${expense.map((item) => `<span class="tag-pill">${item}</span>`).join("")}</div><button class="secondary-button compact-btn" data-demo="category-expense">${icon("plus")}<span>${vi() ? "Tạo danh mục chi" : "Add expense category"}</span></button></article><article class="card"><h2>${vi() ? "Danh mục thu nhập" : "Income categories"}</h2><p class="muted">${vi() ? "Tiền vay, thu gốc và chuyển khoản không được coi là thu nhập." : "Borrowing, principal collection, and transfers are not income."}</p><div class="category-cloud">${income.map((item) => `<span class="tag-pill">${item}</span>`).join("")}</div><button class="secondary-button compact-btn" data-demo="category-income">${icon("plus")}<span>${vi() ? "Tạo danh mục thu" : "Add income category"}</span></button></article></div>`;
   }
 
   function settingsSourcesSection() {
@@ -1819,7 +1751,9 @@ import {
 
   function settingsNotificationsSection() {
     const settings = state.notificationSettings;
-    return `<div class="plan-grid"><article class="card"><h2>${vi() ? "Nhắc hạn trả nợ" : "Debt due reminders"}</h2><p class="muted">${vi() ? "Không hiển thị số tiền hoặc bên đối ứng trên màn hình khóa theo mặc định." : "Amounts and counterparties are hidden on the lock screen by default."}</p><div class="formula-list"><label class="assumption"><span>${vi() ? "Bật nhắc hạn" : "Enable due reminders"}<small>${vi() ? "Mặc định 7, 3, 1 ngày trước và ngày đến hạn" : "Default: 7, 3, 1 days before and on due date"}</small></span><input id="notify-debt-enabled" type="checkbox" ${settings.debtReminder ? "checked" : ""}/></label><label class="assumption"><span>${vi() ? "Kênh nhận" : "Delivery channel"}</span><select id="notify-channel"><option value="in-app-email" ${settings.channel === "in-app-email" ? "selected" : ""}>In-app + Email</option><option value="in-app" ${settings.channel === "in-app" ? "selected" : ""}>In-app</option></select></label></div></article><article class="card"><h2>${vi() ? "Nhắc ghi chi tiêu hằng ngày" : "Daily expense reminder"}</h2><p class="muted">${vi() ? "Theo múi giờ Asia/Ho_Chi_Minh; đổi múi giờ sẽ cập nhật lịch, không gửi bù." : "Uses Asia/Ho_Chi_Minh; timezone changes reschedule without backfilling."}</p><div class="formula-list"><label class="assumption"><span>${vi() ? "Bật lời nhắc" : "Enable reminder"}<small>${vi() ? "Mỗi ngày địa phương tối đa một lần" : "At most once per local day"}</small></span><input id="notify-daily-enabled" type="checkbox" ${settings.dailyCapture ? "checked" : ""}/></label><label class="assumption"><span>${vi() ? "Giờ nhắc" : "Reminder time"}</span><input id="notify-daily-time" type="time" value="${settings.dailyCaptureTime}"/></label></div><p class="prototype-notice">${icon("info")}${vi() ? "Prototype chỉ lưu cấu hình trong phiên; chưa gửi email hoặc push thật." : "The prototype stores this setting in-session and sends no real email or push."}</p></article></div>`;
+    const effectiveTimezone =
+      state.timezoneMode === "device" ? state.deviceTimezone : state.timezoneMode;
+    return `<div class="plan-grid"><article class="card"><h2>${vi() ? "Nhắc hạn trả nợ" : "Debt due reminders"}</h2><p class="muted">${vi() ? "Không hiển thị số tiền hoặc bên đối ứng trên màn hình khóa theo mặc định." : "Amounts and counterparties are hidden on the lock screen by default."}</p><div class="formula-list"><label class="assumption"><span>${vi() ? "Bật nhắc hạn" : "Enable due reminders"}<small>${vi() ? "Mặc định 7, 3, 1 ngày trước và ngày đến hạn" : "Default: 7, 3, 1 days before and on due date"}</small></span><input id="notify-debt-enabled" type="checkbox" ${settings.debtReminder ? "checked" : ""}/></label><label class="assumption"><span>${vi() ? "Kênh nhận" : "Delivery channel"}</span><select id="notify-channel"><option value="in-app-email" ${settings.channel === "in-app-email" ? "selected" : ""}>In-app + Email</option><option value="in-app" ${settings.channel === "in-app" ? "selected" : ""}>In-app</option></select></label></div></article><article class="card"><h2>${vi() ? "Nhắc ghi chi tiêu hằng ngày" : "Daily expense reminder"}</h2><p class="muted">${vi() ? `Theo múi giờ ${effectiveTimezone}; đổi múi giờ sẽ cập nhật lịch, không gửi bù.` : `Uses ${effectiveTimezone}; timezone changes reschedule without backfilling.`}</p><div class="formula-list"><label class="assumption"><span>${vi() ? "Bật lời nhắc" : "Enable reminder"}<small>${vi() ? "Mỗi ngày địa phương tối đa một lần" : "At most once per local day"}</small></span><input id="notify-daily-enabled" type="checkbox" ${settings.dailyCapture ? "checked" : ""}/></label><label class="assumption"><span>${vi() ? "Giờ nhắc" : "Reminder time"}</span><input id="notify-daily-time" type="time" value="${settings.dailyCaptureTime}"/></label></div><p class="prototype-notice">${icon("info")}${vi() ? "Prototype chỉ lưu cấu hình trong phiên; chưa gửi email hoặc push thật." : "The prototype stores this setting in-session and sends no real email or push."}</p></article></div>`;
   }
 
   function settingsPrivacySection() {
@@ -1849,7 +1783,7 @@ import {
       <article class="card">
         <h2>${t("setTabSecurity")}</h2>
         <p class="muted">${vi() ? "Nhật ký kiểm toán lưu lại mọi thay đổi số dư, đối chiếu, đóng sổ và phiên bản công thức để có thể kiểm tra lại." : "Immutable Audit Log records every balance adjustment, reconciliation, monthly close, and calculation version."}</p>
-        <div class="notice" style="margin-top:14px">${icon("shield")}<p><strong>${vi() ? "Google Account đã liên kết" : "Google Account linked"}</strong><br/>nam@example.com · ${vi() ? "Chỉ quyền xác thực, không có quyền Gmail/Drive" : "Authentication scope only; no Gmail/Drive access"}<br/><button class="secondary-button compact-btn" style="margin-top:10px" data-view="auth">${vi() ? "Xem trước màn hình đăng nhập" : "Preview sign-in screen"}</button></p></div>
+        <div class="notice" style="margin-top:14px">${icon("shield")}<p><strong>${vi() ? "Google Account đã liên kết" : "Google Account linked"}</strong><br/>nam.vu@zenval.vn · ${vi() ? "Chỉ quyền xác thực, không có quyền Gmail/Drive" : "Authentication scope only; no Gmail/Drive access"}<br/><button class="secondary-button compact-btn" style="margin-top:10px" data-view="auth">${vi() ? "Xem trước màn hình đăng nhập" : "Preview sign-in screen"}</button></p></div>
         <div class="review-list" style="margin-top:14px">
           <div class="transaction-row"><span class="transaction-icon">${icon("shield")}</span><span class="transaction-copy"><strong>audit-0192 · ReconciliationConfirmed</strong><small>account: vcb-2486 · diff: 0 VND · actor: user:nam · 2026-11-01T08:30:00+07:00</small></span>${status("posted")}<strong>v1.0</strong></div>
           <div class="transaction-row"><span class="transaction-icon">${icon("shield")}</span><span class="transaction-copy"><strong>audit-0191 · ManualPriceSnapshotRecorded</strong><small>instrument: GOLD-9999 · price: 8600000 VND · provider_history_preserved: true</small></span>${status("posted")}<strong>v1.0</strong></div>
@@ -1859,7 +1793,7 @@ import {
   }
 
   function authView() {
-    return `<section class="auth-layout"><article class="card auth-card"><div class="brand auth-brand"><span class="brand-mark">Z</span><span>ZENVAL</span></div><p class="eyebrow">Calm numbers. Clear decisions.</p><h1>${vi() ? "Đăng nhập vào Zenval" : "Sign in to Zenval"}</h1><p class="muted">${vi() ? "Dùng Google Account để tiếp tục. Zenval chỉ yêu cầu thông tin xác thực cơ bản." : "Continue with your Google Account. Zenval requests basic authentication information only."}</p><button class="primary-button google-button" data-action="google-sign-in"><span aria-hidden="true">G</span>${vi() ? "Tiếp tục với Google" : "Continue with Google"}</button><div class="inline-note">${icon("shield")}<span>${vi() ? "Lần đầu đăng nhập sẽ tạo một personal workspace VND/Asia_Ho_Chi_Minh duy nhất. Tài khoản trùng email không tự liên kết." : "First sign-in creates one VND/Asia_Ho_Chi_Minh personal workspace. Matching emails are never auto-linked."}</span></div><button class="text-button" data-view="settings">${vi() ? "Quay lại bản demo đã đăng nhập" : "Return to signed-in demo"}</button></article></section>`;
+    return `<section class="auth-layout"><article class="card auth-card"><div class="brand auth-brand"><span class="brand-mark">Z</span><span>Zenval</span></div><p class="page-meta">Calm numbers. Clear decisions.</p><h1>${vi() ? "Đăng nhập vào Zenval" : "Sign in to Zenval"}</h1><p class="muted">${vi() ? "Dùng Google Account để tiếp tục. Zenval chỉ yêu cầu thông tin xác thực cơ bản." : "Continue with your Google Account. Zenval requests basic authentication information only."}</p><button class="primary-button google-button" data-action="google-sign-in"><span aria-hidden="true">G</span>${vi() ? "Tiếp tục với Google" : "Continue with Google"}</button><div class="inline-note">${icon("shield")}<span>${vi() ? "Lần đầu đăng nhập sẽ tạo một personal workspace VND/Asia_Ho_Chi_Minh duy nhất. Tài khoản trùng email không tự liên kết." : "First sign-in creates one VND/Asia_Ho_Chi_Minh personal workspace. Matching emails are never auto-linked."}</span></div><button class="text-button" data-view="settings">${vi() ? "Quay lại bản demo đã đăng nhập" : "Return to signed-in demo"}</button></article></section>`;
   }
 
   /* ==========================================================================
@@ -1926,6 +1860,8 @@ import {
         return investmentAddDialog();
       case "debt-add":
         return debtAddDialog();
+      case "goal-add":
+        return goalAddDialog();
       default:
         return quickAddDialog();
     }
@@ -1957,7 +1893,25 @@ import {
             <div class="assumption"><span>${t("todayInflow")}<small>posted income entries</small></span><strong class="positive-text">${todaySummary.inflowDisplay}</strong></div>
             <div class="assumption"><span>${t("todayOutflow")}<small>posted expense entries</small></span><strong class="negative-text">${todaySummary.outflowDisplay}</strong></div>
             <div class="assumption"><span>${t("todayExcluded")}<small>internal transfers (Non-P&L)</small></span><strong>${todaySummary.excludedTransferDisplay}</strong></div>`
-          : `<div class="derived-summary"><span>${t("source")}</span><strong>${derived.sourceIds.join(" · ")}</strong></div>`;
+          : state.derivedKey === "cashFlow"
+            ? `
+            <div class="assumption"><span>${vi() ? "Số dư thanh khoản hiện tại" : "Current liquid balance"}<small>Vietcombank + MoMo</small></span><strong>24.950.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Thu nhập dự kiến 30 ngày" : "Expected 30-day inflows"}<small>${vi() ? "Đã áp dụng hệ số thận trọng" : "Confidence-adjusted"}</small></span><strong class="positive-text">+35.000.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Cam kết cố định & dự phòng chi" : "Fixed commitments & planned spend"}<small>${vi() ? "Bao gồm kỳ trả góp VIB 12/11" : "Includes Nov 12 VIB installment"}</small></span><strong class="negative-text">−51.750.000 ₫</strong></div>`
+            : state.derivedKey === "netWorth"
+              ? `
+            <div class="assumption"><span>${vi() ? "Tiền thanh khoản & Tiết kiệm" : "Liquid cash & Savings"}<small>VCB, MoMo, Techcombank</small></span><strong>204.950.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Danh mục đầu tư & Phải thu (ERV)" : "Investments & Receivables (ERV)"}<small>${vi() ? "Đầu tư 108tr · Phải thu 13,15tr" : "Portfolio 108m · ERV 13.15m"}</small></span><strong>121.150.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Tổng dư nợ gốc phải trả" : "Total payable principal"}<small>VIB Loan + VCB Credit Card</small></span><strong class="negative-text">−33.500.000 ₫</strong></div>`
+              : state.derivedKey === "commitmentBaseline"
+                ? `
+            <div class="assumption"><span>${vi() ? "Nhà ở, Tiện ích & Học tập" : "Housing, Utilities & Education"}<small>3 ${vi() ? "khoản chi cố định" : "fixed expense items"}</small></span><strong>−11.250.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Kỳ trả góp khoản vay VIB" : "VIB loan monthly installment"}<small>${vi() ? "Gốc 2,8tr + Lãi 700k" : "Principal 2.8m + Interest 700k"}</small></span><strong>−3.500.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Trích lập Quỹ dự phòng định kỳ" : "Recurring Emergency Fund transfer"}<small>${vi() ? "Chuyển khoản nội bộ" : "Internal transfer"}</small></span><strong>−5.000.000 ₫</strong></div>`
+                : `
+            <div class="assumption"><span>${vi() ? "Cổ phiếu & Chứng chỉ quỹ" : "Listed equity & Mutual funds"}<small>FPT (67tr) + DCDS (19,8tr)</small></span><strong>86.800.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Vàng vật chất 9999 (Thủ công)" : "Physical gold 9999 (Manual)"}<small>${vi() ? "2 lượng · Snapshot 01/11" : "2 taels · Nov 01 snapshot"}</small></span><strong>17.200.000 ₫</strong></div>
+            <div class="assumption"><span>${vi() ? "Tiền mặt chờ đầu tư TCBS" : "TCBS brokerage cash"}<small>${vi() ? "Đã chống tính trùng sổ cái" : "Double-count protected"}</small></span><strong>4.000.000 ₫</strong></div>`;
     const horizonLabel = vi() ? "Phạm vi kết thúc" : "Horizon ends";
     const asOfLabel = vi() ? "Dữ liệu tại" : "Data as of";
     const versionLabel = vi() ? "Phiên bản tính" : "Calculation version";
@@ -1968,7 +1922,7 @@ import {
     const display =
       state.derivedKey === "todayCashflow" ? todaySummary.netDisplay : derived.display;
     const asOf = state.derivedKey === "todayCashflow" ? todaySummary.asOf : derived.asOf;
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="overlay-backdrop" data-action="close" tabindex="-1" aria-label="${t("close")}"></button><aside class="drawer"><header class="dialog-header"><div>${status(derived.state)}<h2 id="dialog-title">${t(derived.titleKey)}</h2></div><button class="icon-button" data-action="close" data-initial-focus aria-label="${t("close")}">${icon("close")}</button></header><p class="drawer-intro">${t("forecastNote")}</p><div class="formula-list">${detailRows}<div class="formula-total"><span>${t(derived.titleKey)}</span><strong>${display}</strong></div></div><div class="provenance">${icon("clock")}<div><strong>${horizonLabel}: ${derived.horizonEnd}</strong><small>${asOfLabel}: ${asOf}</small><small>${versionLabel}: ${derived.calculationVersion}</small><small>source_ids: ${sourceIds.join(", ")}</small></div></div></aside></div>`;
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="overlay-backdrop" data-action="close" tabindex="-1" aria-label="${t("close")}"></button><aside class="drawer"><header class="dialog-header"><div>${status(derived.state)}<h2 id="dialog-title">${t(derived.titleKey)}</h2></div><button class="icon-button" data-action="close" data-initial-focus aria-label="${t("close")}">${icon("close")}</button></header><p class="drawer-intro">${t("forecastNote")}</p><div class="formula-list">${detailRows}<div class="formula-total"><span>${t(derived.titleKey)}</span><strong>${display}</strong></div></div><div class="provenance">${icon("clock")}<div><strong>${horizonLabel}: ${derived.horizonEnd}</strong><small>${asOfLabel}: ${asOf}</small><small>${versionLabel}: ${derived.calculationVersion}</small><small>${vi() ? "Nguồn đối chiếu" : "Sources"}: ${sourceIds.join(", ")}</small></div></div></aside></div>`;
   }
 
   function quickAddDialog() {
@@ -2017,7 +1971,7 @@ import {
         <header class="dialog-header"><h2 id="dialog-title">${t("addTitle")}</h2><button class="icon-button" data-action="close" data-initial-focus aria-label="${t("close")}">${icon("close")}</button></header>
         <div class="segmented transaction-types">${["expense", "income", "transfer"].map((type) => `<button class="${state.transactionType === type ? "selected" : ""}" data-action="transaction-type" data-value="${type}" aria-pressed="${state.transactionType === type}">${t(type)}</button>`).join("")}</div>
         ${transfer ? `<div class="inline-note" data-pnl-impact="false">${icon("info")}${t("transferRail")}</div>` : ""}
-        <div id="quick-add-error" class="form-error" role="alert" hidden></div>
+        <div id="quick-add-error" class="form-error" role="alert" tabindex="-1" hidden></div>
         <label class="amount-input"><span class="form-label">${t("amount")}</span><span><input id="quick-amount-input" inputmode="numeric" value="${draft("quick-amount-input")}" placeholder="0" required/><b>₫</b></span></label>
         <div class="form-grid">
           <label><span class="form-label">${transfer ? t("from") : t("account")}</span><select id="quick-account-input"><option ${selected("quick-account-input", "Vietcombank · •• 2486")}>Vietcombank · •• 2486</option><option ${selected("quick-account-input", "MoMo · •• 0901")}>MoMo · •• 0901</option></select></label>
@@ -2077,6 +2031,7 @@ import {
                     : "Reserved upfront from Safe-to-spend and auto-matched within tolerance."
           }</span>
         </div>
+        <div id="commitment-error" class="form-error" role="alert" tabindex="-1" hidden></div>
         <label class="field">
           <span class="form-label">${vi() ? "Tên khoản cố định hàng tháng" : "Commitment name"}</span>
           <input id="commit-name-input" value="${draft("commit-name-input")}" placeholder="${isInflow ? (vi() ? "Ví dụ: Lương tháng / Thu cho thuê nhà" : "e.g. Monthly salary") : vi() ? "Ví dụ: Phí quản lý chung cư / Học phí" : "e.g. Condo management fee"}"/>
@@ -2089,7 +2044,7 @@ import {
           <label>
             <span class="form-label">${vi() ? "Tần suất & Ngày đến hạn" : "Cadence & Due day"}</span>
             <select id="commit-day-input">
-              <option value="05" ${selected("commit-day-input", "05")}>${vi() ? "Hàng tháng · Ngày 05" : "Monthly · Day 05"}</option>
+              <option value="05" ${selected("commit-day-input", "05" /* taste-skill-ignore */)}>${vi() ? "Hàng tháng · Ngày 05" : "Monthly · Day 05"}</option>
               <option value="10" ${selected("commit-day-input", "10")}>${vi() ? "Hàng tháng · Ngày 10" : "Monthly · Day 10"}</option>
               <option value="15" ${selected("commit-day-input", "15")}>${vi() ? "Hàng tháng · Ngày 15" : "Monthly · Day 15"}</option>
               <option value="25" ${selected("commit-day-input", "25")}>${vi() ? "Hàng tháng · Ngày 25" : "Monthly · Day 25"}</option>
@@ -2117,8 +2072,8 @@ import {
           <label>
             <span class="form-label">${vi() ? "Mức ưu tiên giữ tiền (STS)" : "Reservation priority"}</span>
             <select id="commit-priority-input">
-              <option value="essential" ${selected("commit-priority-input", "essential")}>${vi() ? "Thiết yếu — Giữ tiền trước trong STS" : "Essential — Reserve in STS"}</option>
-              <option value="flexible" ${selected("commit-priority-input", "flexible")}>${vi() ? "Linh hoạt — Chỉ nhắc lịch" : "Flexible — Reminder only"}</option>
+              <option value="essential" ${selected("commit-priority-input", "essential")}>${vi() ? "Thiết yếu · Giữ tiền trước trong STS" : "Essential · Reserve in STS"}</option>
+              <option value="flexible" ${selected("commit-priority-input", "flexible")}>${vi() ? "Linh hoạt · Chỉ nhắc lịch" : "Flexible · Reminder only"}</option>
             </select>
           </label>
         </div>
@@ -2134,6 +2089,10 @@ import {
   function investmentAddDialog() {
     const trade = state.invActivityType === "buy" || state.invActivityType === "sell";
     const dividend = state.invActivityType === "dividend";
+    const selectedAssetClass = state.formDrafts["inv-class-input"] || "equity";
+    const catalogOptions = instrumentsForAssetClass(selectedAssetClass);
+    const manualInstrument =
+      state.formDrafts["inv-symbol-input"] === "manual" || catalogOptions.length === 0;
     const quote = trade
       ? calculateInvestmentAmounts({
           quantity: state.formDrafts["inv-qty-input"] || "100",
@@ -2181,7 +2140,7 @@ import {
           ${icon("info")}
           <span>${impactCopy[state.invActivityType]}</span>
         </div>
-        <div id="investment-error" class="form-error" role="alert" hidden></div>
+        <div id="investment-error" class="form-error" role="alert" tabindex="-1" hidden></div>
         <div class="form-grid">
           <label>
             <span class="form-label">${vi() ? "Loại tài sản" : "Asset class"}</span>
@@ -2195,9 +2154,11 @@ import {
           </label>
           <label>
             <span class="form-label">${vi() ? "Mã tài sản & Danh mục" : "Symbol & Portfolio"}</span>
-            <input id="inv-symbol-input" value="${draft("inv-symbol-input")}" placeholder="${vi() ? "Ví dụ: VNM, MWG, VESAF, SJC" : "e.g. VNM, MWG, VESAF"}"/>
+            <select id="inv-symbol-input">${catalogOptions.map((instrument) => `<option value="${instrument.id}" ${selected("inv-symbol-input", instrument.id)}>${instrument.label} · provider catalog</option>`).join("")}<option value="manual" ${manualInstrument ? "selected" : ""}>${vi() ? "Không tìm thấy · Tạo tài sản thủ công" : "Not found · Create manual instrument"}</option></select>
+            <small class="field-help">${vi() ? "Prototype catalog: production sẽ tải danh sách mã qua Market Data adapter và hiển thị loading/error/stale." : "Prototype catalog: production loads symbols through the Market Data adapter with loading/error/stale states."}</small>
           </label>
         </div>
+        ${manualInstrument ? `<label class="field"><span class="form-label">${vi() ? "Tên / mã tài sản thủ công" : "Manual asset name / symbol"}</span><input id="inv-manual-name-input" value="${draft("inv-manual-name-input")}" placeholder="${vi() ? "Ví dụ: Vàng SJC 9999" : "e.g. SJC Gold 9999"}"/><small class="field-help">${vi() ? "Tài sản sẽ mang nguồn Manual và vào Cần xem lại trước khi dùng trong báo cáo." : "The asset is marked Manual and routed to Review before reports use it."}</small></label>` : ""}
         ${
           trade
             ? `<div class="form-grid" style="margin-top:12px">
@@ -2240,6 +2201,30 @@ import {
     </div>`;
   }
 
+  function goalAddDialog() {
+    const linkOptions = [
+      { id: "account:tcb-savings", label: "Techcombank Savings" },
+      { id: "holding:FPT", label: "FPT · Holding market value" },
+      { id: "tag:goal", label: vi() ? "Giao dịch gắn thẻ #muctieu" : "Transactions tagged #goal" },
+      {
+        id: "plan:recurring",
+        label: vi() ? "Khoản đóng góp định kỳ trong kế hoạch" : "Recurring plan contribution",
+      },
+    ];
+    return `<div class="overlay centered" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="overlay-backdrop" data-action="close" tabindex="-1" aria-label="${t("close")}"></button><section class="modal"><header class="dialog-header"><h2 id="dialog-title">${state.editingGoalId ? (vi() ? "Chỉnh sửa mục tiêu" : "Edit financial goal") : vi() ? "Thêm mục tiêu tài chính" : "Add financial goal"}</h2><button class="icon-button" data-action="close" data-initial-focus aria-label="${t("close")}">${icon("close")}</button></header><div id="goal-error" class="form-error" role="alert" tabindex="-1" hidden></div><label class="field"><span class="form-label">${vi() ? "Tên mục tiêu" : "Goal name"}</span><input id="goal-name-input" value="${draft("goal-name-input")}" placeholder="${vi() ? "Ví dụ: Quỹ dự phòng" : "e.g. Emergency fund"}"/></label><div class="form-grid"><label><span class="form-label">${vi() ? "Số tiền mục tiêu" : "Target amount"}</span><input id="goal-target-input" inputmode="numeric" value="${draft("goal-target-input")}" placeholder="120.000.000"/></label><label><span class="form-label">${vi() ? "Ngày mục tiêu" : "Target date"}</span><input id="goal-date-input" type="date" value="${draft("goal-date-input", "2027-11-01")}"/></label><label><span class="form-label">${vi() ? "Ưu tiên" : "Priority"}</span><select id="goal-priority-input"><option value="high" ${selected("goal-priority-input", "high")}>${vi() ? "Cao" : "High"}</option><option value="medium" ${selected("goal-priority-input", "medium")}>${vi() ? "Trung bình" : "Medium"}</option><option value="low" ${selected("goal-priority-input", "low")}>${vi() ? "Thấp" : "Low"}</option></select></label><label><span class="form-label">${vi() ? "Phần phân bổ nguồn" : "Source allocation"}</span><input id="goal-allocation-input" type="number" min="1" max="100" value="${draft("goal-allocation-input", "50")}"/></label></div><label class="field"><span class="form-label">${vi() ? "Liên kết nguồn theo dõi" : "Linked tracking source"}</span><select id="goal-link-input">${linkOptions.map((link) => `<option value="${link.id}" ${selected("goal-link-input", link.id)}>${link.label}</option>`).join("")}</select></label><label class="inline-note"><input id="goal-overlap-input" type="checkbox" ${state.formDrafts["goal-overlap-input"] === "true" ? "checked" : ""}/><span>${vi() ? "Cho phép nguồn này chồng lấp với mục tiêu khác sau cảnh báo" : "Allow this source to overlap another goal after warning"}</span></label><p class="prototype-notice">${icon("info")}${vi() ? "Preview tạo plan draft: đóng góp thực tế, biến động thị trường, kế hoạch và gap được theo dõi riêng; không chuyển tiền." : "Preview creates a plan draft: actual contribution, market movement, planned contribution, and gap remain separate; no money moves."}</p><footer class="modal-actions"><button class="secondary-button" data-action="close">${t("close")}</button><button class="primary-button" data-action="save-goal">${vi() ? "Lưu mục tiêu" : "Save goal"}</button></footer></section></div>`;
+  }
+
+  function goalLinkLabel(linkId) {
+    return {
+      "account:tcb-savings": "Techcombank Savings",
+      "holding:FPT": "FPT · Holding market value",
+      "tag:goal": vi() ? "Giao dịch gắn thẻ #muctieu" : "Transactions tagged #goal",
+      "plan:recurring": vi()
+        ? "Khoản đóng góp định kỳ trong kế hoạch"
+        : "Recurring plan contribution",
+    }[linkId];
+  }
+
   function debtAddDialog() {
     const isRec = state.debtDirection === "receivable";
     return `<div class="overlay centered" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
@@ -2264,7 +2249,7 @@ import {
           ${icon("info")}
           <span>${vi() ? "Giải ngân hoặc thu/trả tiền gốc chỉ làm thay đổi tài sản và nghĩa vụ, không tính vào Thu/Chi. Chỉ lãi và phí mới tác động Thu/Chi." : "Disbursement and principal repayment/collection are balance-sheet movements (Non-P&L)."}</span>
         </div>
-        <div id="debt-error" class="form-error" role="alert" hidden></div>
+        <div id="debt-error" class="form-error" role="alert" tabindex="-1" hidden></div>
         <label class="field">
           <span class="form-label">${vi() ? "Bên đối ứng / Tên khoản nợ" : "Counterparty / Obligation title"}</span>
           <input id="debt-title-input" value="${draft("debt-title-input")}" placeholder="${isRec ? (vi() ? "Ví dụ: Cho Hoàng vay ngắn hạn" : "e.g. Personal loan to Hoang") : vi() ? "Ví dụ: Vay trả góp mua Macbook" : "e.g. Laptop installment loan"}"/>
@@ -2306,15 +2291,21 @@ import {
   /* ==========================================================================
    * RENDER, FOCUS MANAGEMENT & EVENT HANDLERS
    * ========================================================================== */
-  function render({ focusMain = false } = {}) {
+  let toastTimer = null;
+
+  function render({ focusMain = false, initialDialogFocus = false } = {}) {
+    const activeId = document.activeElement?.id;
     document.documentElement.lang = state.locale;
     document.documentElement.dataset.theme = state.theme;
     document.querySelector('meta[name="theme-color"]').content =
       state.theme === "dark" ? "#0d1714" : "#f5f7f3";
     document.querySelector(".skip-link").textContent = t("skip");
     root.innerHTML = shell();
-    if (state.dialog)
+    if (state.dialog && initialDialogFocus) {
       requestAnimationFrame(() => root.querySelector("[data-initial-focus]")?.focus());
+    } else if (state.dialog && activeId) {
+      requestAnimationFrame(() => document.getElementById(activeId)?.focus());
+    }
     if (focusMain) requestAnimationFrame(() => document.querySelector("#main-content")?.focus());
   }
   function setView(view) {
@@ -2331,10 +2322,11 @@ import {
     state.returnFocusId = returnFocusId(dialog, control.dataset.surface);
     if (control.dataset.derived) state.derivedKey = control.dataset.derived;
     state.dialog = dialog;
-    render();
+    render({ initialDialogFocus: true });
   }
   function closeDialog() {
     state.dialog = null;
+    state.editingGoalId = null;
     render();
     focusReturnControl();
   }
@@ -2342,10 +2334,10 @@ import {
     state.toast = message;
     render();
     if (restoreFocus) focusReturnControl();
-    window.setTimeout(() => {
+    if (toastTimer) window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
       state.toast = null;
-      render();
-      if (restoreFocus) focusReturnControl();
+      root.querySelector(".toast")?.remove();
     }, 2600);
   }
 
@@ -2357,8 +2349,45 @@ import {
     error.focus?.();
   }
 
+  const vndAmountInputs = new Set([
+    "quick-amount-input",
+    "commit-amount-input",
+    "inv-unit-price-input",
+    "inv-amount-input",
+    "inv-fee-input",
+    "goal-target-input",
+    "debt-principal-input",
+  ]);
+
+  function formatAmountControl(control) {
+    if (!vndAmountInputs.has(control?.id) || control.readOnly) return;
+    const raw = control.value;
+    const formatted = formatVndInput(raw);
+    if (formatted === raw) return;
+    const selectionStart = control.selectionStart ?? raw.length;
+    const digitsBefore = (raw.slice(0, selectionStart).match(/\d/g) || []).length;
+    control.value = formatted;
+    if (typeof control.setSelectionRange === "function") {
+      let seenDigits = 0;
+      let nextPos = formatted.length;
+      if (digitsBefore === 0) {
+        nextPos = /^[+−-]/.test(formatted) ? 1 : 0;
+      } else {
+        for (let i = 0; i < formatted.length; i += 1) {
+          if (/\d/.test(formatted[i])) seenDigits += 1;
+          if (seenDigits === digitsBefore) {
+            nextPos = i + 1;
+            break;
+          }
+        }
+      }
+      control.setSelectionRange(nextPos, nextPos);
+    }
+  }
+
   root.addEventListener("input", (event) => {
     const control = event.target;
+    formatAmountControl(control);
     if (control?.id) state.formDrafts[control.id] = control.value;
     if (["debt-principal-input", "debt-rate-input"].includes(control?.id)) {
       const preview = root.querySelector("#debt-erv-preview");
@@ -2388,6 +2417,8 @@ import {
         "inv-unit-price-input",
         "inv-amount-input",
         "inv-fee-input",
+        "inv-class-input",
+        "inv-symbol-input",
         "debt-principal-input",
         "debt-rate-input",
       ].includes(control?.id)
@@ -2402,6 +2433,24 @@ import {
     if (control?.id === "notify-daily-time")
       state.notificationSettings.dailyCaptureTime = control.value;
     if (control?.id === "notify-channel") state.notificationSettings.channel = control.value;
+    if (control?.id === "base-currency-input") {
+      Object.assign(state, applyPreferenceChange(state, "baseCurrency", control.value));
+      persist("base-currency", state.baseCurrency);
+      toast(
+        vi()
+          ? "Đã lưu tiền tệ chính trong phiên; số tiền gốc không thay đổi."
+          : "Base currency saved for this session; original amounts are unchanged.",
+      );
+    }
+    if (control?.id === "timezone-mode-input") {
+      Object.assign(state, applyPreferenceChange(state, "timezoneMode", control.value));
+      persist("timezone-mode", state.timezoneMode);
+      toast(
+        vi()
+          ? `Đã dùng múi giờ ${control.value === "device" ? state.deviceTimezone : control.value}.`
+          : `Using timezone ${control.value === "device" ? state.deviceTimezone : control.value}.`,
+      );
+    }
     if (control?.id?.startsWith("notify-"))
       toast(
         vi()
@@ -2413,7 +2462,10 @@ import {
   root.addEventListener("click", (event) => {
     const control = event.target.closest("button");
     if (!control) return;
-    if (control.dataset.view) return setView(control.dataset.view);
+    if (control.dataset.view) {
+      Object.assign(state, resolveNavigationTarget(state, control.dataset));
+      return setView(state.view);
+    }
     if (control.dataset.locale) {
       state.locale = control.dataset.locale;
       persist("locale", state.locale);
@@ -2423,6 +2475,15 @@ import {
       case "theme":
         state.theme = state.theme === "light" ? "dark" : "light";
         persist("theme", state.theme);
+        render();
+        break;
+      case "theme-system":
+        state.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        try {
+          localStorage.removeItem("zenval-design:theme");
+        } catch {
+          // Keep the effective in-memory device theme when storage is unavailable.
+        }
         render();
         break;
       case "home-sub":
@@ -2436,6 +2497,10 @@ import {
       case "open-commitments":
         state.txSub = "commitments";
         setView("transactions");
+        break;
+      case "ledger-filter":
+        state.ledgerFilter = control.dataset.value;
+        render();
         break;
       case "commitment-filter":
         state.commitmentFilter = control.dataset.value;
@@ -2502,11 +2567,135 @@ import {
       case "debt-add":
         openDialog("debt-add", control);
         break;
+      case "goal-add":
+        openDialog("goal-add", control);
+        break;
       case "explain":
         openDialog("explain", control);
         break;
       case "close":
         closeDialog();
+        break;
+      case "save-allocation": {
+        const allocationIds = [
+          "allocation-needs",
+          "allocation-wants",
+          "allocation-saving",
+          "allocation-investing",
+          "allocation-debt",
+        ];
+        const values = allocationIds.map((id) => Number(root.querySelector(`#${id}`)?.value));
+        if (!validateAllocationPercentages(values)) {
+          toast(vi() ? "Tổng tỷ lệ phải bằng 100%." : "Allocation ratios must total 100%.");
+          break;
+        }
+        allocationIds.forEach((id, index) => {
+          state.formDrafts[id] = String(values[index]);
+        });
+        state.formDrafts["allocation-effective-date"] =
+          root.querySelector("#allocation-effective-date")?.value || "2026-12-01";
+        toast(
+          vi()
+            ? "Đã lưu tỷ lệ cá nhân hóa trong phiên prototype."
+            : "Personal ratios saved for this prototype session.",
+        );
+        break;
+      }
+      case "save-goal": {
+        const name = root.querySelector("#goal-name-input")?.value?.trim();
+        const target = parseVnd(root.querySelector("#goal-target-input")?.value);
+        const sourceAllocation = Number(root.querySelector("#goal-allocation-input")?.value);
+        if (
+          !name ||
+          target === null ||
+          target <= 0n ||
+          !Number.isInteger(sourceAllocation) ||
+          sourceAllocation < 1 ||
+          sourceAllocation > 100
+        ) {
+          showFormError(
+            "goal-error",
+            vi()
+              ? "Nhập tên và số tiền mục tiêu lớn hơn 0."
+              : "Enter a name and target greater than zero.",
+          );
+          break;
+        }
+        const link = root.querySelector("#goal-link-input")?.value || "";
+        const priority = root.querySelector("#goal-priority-input")?.value || "medium";
+        const overlap = root.querySelector("#goal-overlap-input")?.checked === true;
+        const targetDate = root.querySelector("#goal-date-input")?.value || "2027-11-01";
+        const allocatedElsewhere = allocatedGoalPercentage(
+          state.customGoals,
+          link,
+          state.editingGoalId,
+        );
+        if (allocatedElsewhere + sourceAllocation > 100 && !overlap) {
+          showFormError(
+            "goal-error",
+            vi()
+              ? `Nguồn đã phân bổ ${allocatedElsewhere}%. Hãy giảm tỷ lệ hoặc xác nhận overlap.`
+              : `This source is already ${allocatedElsewhere}% allocated. Reduce it or confirm overlap.`,
+          );
+          break;
+        }
+        const goalId = state.editingGoalId || `session-goal-${Date.now()}`;
+        const goalRecord = [
+          escapeHtml(name),
+          `0 ₫ / ${formatVnd(target)} (0%)`,
+          `${vi() ? "Liên kết" : "Linked"}: ${escapeHtml(goalLinkLabel(link) || link)} (${sourceAllocation}%) · ${vi() ? "Đích" : "Target"}: ${targetDate} · ${vi() ? "Ưu tiên" : "Priority"}: ${priority} · ${overlap ? (vi() ? "Overlap đã xác nhận" : "Overlap confirmed") : vi() ? "Không overlap" : "No overlap"} · ${vi() ? "Thực góp 0 · Thị trường 0 · Kế hoạch 0 · Gap" : "Actual 0 · Market 0 · Planned 0 · Gap"} ${formatVnd(target)}`,
+          "estimated",
+          goalId,
+          link,
+          sourceAllocation,
+          targetDate,
+          priority,
+          overlap,
+          target.toString(),
+        ];
+        if (state.editingGoalId) {
+          const goalIndex = state.customGoals.findIndex((goal) => goal[4] === state.editingGoalId);
+          state.customGoals[goalIndex] = goalRecord;
+        } else {
+          state.customGoals.unshift(goalRecord);
+        }
+        state.editingGoalId = null;
+        state.formDrafts = {};
+        state.dialog = null;
+        state.planSub = "goals";
+        toast(
+          vi()
+            ? "Đã thêm mục tiêu theo dõi trong phiên; không có tiền được chuyển."
+            : "Goal added for this session; no money was moved.",
+          true,
+        );
+        break;
+      }
+      case "goal-edit": {
+        const goal = state.customGoals.find((item) => item[4] === control.dataset.goalId);
+        if (goal) {
+          state.editingGoalId = goal[4];
+          state.formDrafts = restoreGoalFormDraft(goal);
+          openDialog("goal-add", control);
+        }
+        break;
+      }
+      case "goal-pause": {
+        const goal = state.customGoals.find((item) => item[4] === control.dataset.goalId);
+        if (goal) {
+          goal[2] = `${goal[2]} · ${vi() ? "Đã tạm dừng" : "Paused"}`;
+          goal[3] = "pending";
+          toast(vi() ? "Đã tạm dừng plan draft của mục tiêu." : "Goal plan draft paused.");
+        }
+        break;
+      }
+      case "goal-archive":
+        state.customGoals = state.customGoals.filter((item) => item[4] !== control.dataset.goalId);
+        toast(
+          vi()
+            ? "Đã lưu trữ mục tiêu; dữ liệu nguồn không bị xóa."
+            : "Goal archived; source data was not deleted.",
+        );
         break;
       case "review-filter":
         state.reviewBucket = control.dataset.value;
@@ -2538,7 +2727,7 @@ import {
           pnlImpact: !isTransfer,
           state: "posted",
           date,
-          time: "21:00",
+          time: localTimeHHMM(),
           titleVi:
             note ||
             (isTransfer
@@ -2559,6 +2748,7 @@ import {
         state.txSub = "ledger";
         state.view = "transactions";
         location.hash = "transactions";
+        state.returnFocusId = "main-content";
         toast(
           isTodayTransaction(date, todayCashflowSummary.date)
             ? vi()
@@ -2573,8 +2763,7 @@ import {
       }
       case "save-commitment": {
         const nameInput = root.querySelector("#commit-name-input")?.value?.trim();
-        const amountInput =
-          root.querySelector("#commit-amount-input")?.value?.trim() || "1.500.000";
+        const amountInput = root.querySelector("#commit-amount-input")?.value?.trim() || "";
         const dueDay = root.querySelector("#commit-day-input")?.value || "10";
         const tolerance = root.querySelector("#commit-tolerance-input")?.value || "±5%";
         const account =
@@ -2582,7 +2771,8 @@ import {
         const priority = root.querySelector("#commit-priority-input")?.value || "essential";
         const parsedAmount = parseVnd(amountInput);
         if (parsedAmount === null || parsedAmount <= 0n) {
-          toast(
+          showFormError(
+            "commitment-error",
             vi() ? "Nhập số tiền chuẩn lớn hơn 0." : "Enter a standard amount greater than zero.",
           );
           break;
@@ -2634,18 +2824,22 @@ import {
         break;
       }
       case "save-investment": {
-        const symbol =
-          root.querySelector("#inv-symbol-input")?.value?.trim().toUpperCase() || "VNM";
-        if (!/^[A-Z0-9._-]{1,30}$/.test(symbol)) {
+        const assetClass = root.querySelector("#inv-class-input")?.value || "equity";
+        const instrument = resolveInstrumentSelection(
+          root.querySelector("#inv-symbol-input")?.value,
+          assetClass,
+          root.querySelector("#inv-manual-name-input")?.value,
+        );
+        if (!instrument.ok) {
           showFormError(
             "investment-error",
             vi()
-              ? "Mã tài sản chỉ được gồm chữ, số, dấu chấm, gạch ngang hoặc gạch dưới."
-              : "Symbol may contain only letters, numbers, dots, hyphens, or underscores.",
+              ? "Chọn mã phù hợp với loại tài sản hoặc nhập tên tài sản thủ công."
+              : "Choose an instrument matching the asset class or enter a manual asset name.",
           );
           break;
         }
-        const assetClass = root.querySelector("#inv-class-input")?.value || "equity";
+        const symbol = instrument.symbol;
         const qty = root.querySelector("#inv-qty-input")?.value?.trim() || "";
         const amountInput = root.querySelector("#inv-amount-input")?.value?.trim() || "";
         const feeInput = root.querySelector("#inv-fee-input")?.value?.trim() || "0";
@@ -2693,9 +2887,14 @@ import {
             marketPrice: "Chưa có giá thị trường",
             marketValue: "Chưa định giá",
             unrealizedPnl: "Chưa tính",
-            sourceVi: "Bản nháp trong phiên · Chưa có provider snapshot",
-            sourceEn: "Session draft · No provider snapshot",
-            valuationMode: "manual",
+            sourceVi: instrument.needsReview
+              ? "Tài sản thủ công · Cần xem lại mapping và định giá"
+              : "Bản nháp provider catalog · Chưa có price snapshot",
+            sourceEn: instrument.needsReview
+              ? "Manual instrument · Review mapping and valuation"
+              : "Provider-catalog draft · No price snapshot",
+            valuationMode: instrument.source,
+            instrumentId: instrument.instrumentId,
             doubleCountProtected: false,
             state: "pending",
           });
@@ -2755,6 +2954,7 @@ import {
           kind: state.invActivityType,
           pnlImpact: activityEffect?.pnlImpact ?? false,
           symbol,
+          instrumentId: instrument.instrumentId,
           date: effectiveDate.split("-").reverse().join("/"),
           titleVi: activityTitles[state.invActivityType][0],
           titleEn: activityTitles[state.invActivityType][1],
@@ -2772,13 +2972,24 @@ import {
               : "Session draft with separate gross value and fees/tax",
           amount: formatVnd(net),
           state: "pending",
+          needsReview: instrument.needsReview,
         });
+        if (instrument.needsReview) {
+          state.customReviews.unshift(createManualInstrumentReview(instrument, state.locale));
+        }
         state.formDrafts = {};
         state.dialog = null;
         state.invSub = "activity";
         state.view = "investments";
         location.hash = "investments";
-        toast(t("savedFeedback"), true);
+        toast(
+          instrument.needsReview
+            ? vi()
+              ? "Đã tạo tài sản thủ công và chuyển vào Cần xem lại; chưa dùng cho báo cáo."
+              : "Manual instrument created and routed to Review; reports do not use it yet."
+            : t("savedFeedback"),
+          true,
+        );
         break;
       }
       case "save-debt": {
@@ -2834,7 +3045,7 @@ import {
             originalPrincipal: principal,
             outstandingPrincipal: principal,
             rate: escapeHtml(rate || "Chưa nhập lãi suất"),
-            nextInstallment: "Bản nháp — cần nhập lịch và tách Gốc/Lãi/Phí trước khi post",
+            nextInstallment: "Bản nháp · cần nhập lịch và tách Gốc/Lãi/Phí trước khi post",
             dueDate: dueDisplay,
             reminderSchedule,
             principalPnlImpact: false,

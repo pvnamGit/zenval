@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zenval",
-  description: "Calm numbers. Clear decisions.",
+  title: "Zenval — UI Prototype",
+  description: "Responsive bilingual prototype for calm, clear personal finance.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -1,6 +1,8 @@
 {
   "version": 1,
   "securityMode": "unsigned-fallback",
+  "acknowledgedNewRailBypass": true,
+  "trustedCodeownersAttested": true,
   "harnesses": {
     "codex": {
       "railEnforcement": "auto"

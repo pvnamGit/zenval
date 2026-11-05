@@ -177,13 +177,13 @@ Không dùng “số giao dịch nhập” hay time-in-app làm north star. Tấ
 ### 4.1 Giả định đã dùng để viết PRD
 
 - Phase 1 là single-user, một workspace cá nhân, tuổi tối thiểu 18 **[Giả định pháp lý cần xác thực]**.
-- VND là base currency mặc định; mỗi money amount luôn lưu original currency và converted base amount khi cần.
+- Onboarding yêu cầu user tự chọn ngôn ngữ và base currency; không suy diễn hai lựa chọn này từ IP/location. VND chỉ là lựa chọn được gợi ý cho thị trường Việt Nam.
 - Manual entry, recurring template và CSV/XLSX import là input chính; OCR receipt là beta/Should.
 - Giá tài sản có thể từ provider hoặc manual; số manual luôn được gắn nhãn.
 - Safe-to-spend là decision-support, không phải balance khả dụng của ngân hàng.
 - Month close tạo snapshot có version; không khóa cứng dữ liệu vĩnh viễn, nhưng chỉnh sửa hồi tố phải để audit và recompute.
 - Budget period mặc định theo tháng dương lịch; hỗ trợ payday/custom cycle ở Phase 2.
-- Giao diện tiếng Việt trước; cấu trúc i18n, timezone và locale chuẩn bị từ đầu.
+- Giao diện tiếng Việt trước; cấu trúc i18n, timezone và locale chuẩn bị từ đầu. Theme và timezone ban đầu theo OS/browser; location không tự thu thập hoặc lưu nếu user chưa cấp quyền cho một use case cụ thể.
 
 ### 4.2 Constraints
 
@@ -258,7 +258,9 @@ Settings
 
 ### 6.1 Identity, profile và preferences
 
-- Profile gồm locale, timezone, base currency, cycle preference, first day of week và notification preferences.
+- Sau đăng nhập lần đầu, user chủ động chọn **ngôn ngữ** và **base currency**; hệ thống không tự set hai giá trị này từ location/IP. Base currency change có preview và không sửa original amount.
+- Theme dùng `prefers-color-scheme` và timezone dùng IANA timezone từ OS/browser làm giá trị hiệu lực ban đầu, không tạo profile preference cho đến khi user override. Location không phải field onboarding và chỉ được xin quyền đúng lúc cho use case đã giải thích.
+- Profile preference có thể gồm language, base currency, timezone override, theme override, cycle preference, first day of week và notification preferences; mỗi override có thể “Dùng theo thiết bị”.
 - Một user sở hữu một personal workspace Phase 1; mọi entity gắn `workspace_id` để mở rộng household sau này.
 - Module opt-in độc lập. Tắt module không xóa dữ liệu.
 - Consent được version hóa theo purpose/source; revoke không làm mất quyền export.
@@ -336,6 +338,8 @@ Sản phẩm phải có một khu vực **Chi phí cố định/Cam kết hàng 
 
 **Spending plan:** optional, hỗ trợ fixed commitments, flexible envelopes, goals và buffers. User có thể plan category-level hoặc chỉ aggregate.
 
+User có thể tạo và version hóa một **allocation policy** cá nhân gồm tỷ lệ/amount cho `needs`, `wants`, `saving`, `investing`, `debt extra` và custom bucket. Không có tỷ lệ bắt buộc toàn hệ thống. Tổng các bucket percentage-based phải bằng 100%; bucket amount-based được kiểm tra không vượt nguồn phân bổ. Template phổ biến chỉ là điểm bắt đầu có thể sửa, reset hoặc bỏ qua.
+
 Fixed commitments đã active được nạp tự động vào plan/forecast theo occurrence và priority. User có thể exclude một occurrence hoặc đổi scenario, nhưng UI phải cảnh báo nếu thao tác này làm nghĩa vụ tối thiểu biến mất khỏi conservative forecast.
 
 **Safe-to-spend (STS):** số ước tính có thể chi cho discretionary spending trong horizon mà không chạm các khoản đã dành riêng.
@@ -357,6 +361,24 @@ STS = eligible liquid cash
 - Forecast hiển thị base, conservative và optimistic range khi thu nhập biến động; không chỉ một con số giả chính xác.
 - One-off plan override không sửa lịch sử và có expiry.
 
+**Công thức projected cash flow (daily closing balance):**
+
+```text
+projected_balance[d] = projected_balance[d-1]
+  + sum(weighted_expected_inflows occurring on d)
+  - sum(expected_cash_outflows occurring on d)
+
+weighted_expected_inflow[i] = amount[i] × confidence_weight[i, scenario]
+expected_cash_outflow[o] = committed_amount[o] + scenario_adjustment[o]
+```
+
+- `projected_balance[d0]` lấy từ closing available cash đã posted/reconciled tại `as_of`; pending bank item chỉ được cộng/trừ một lần theo dedup policy.
+- Base dùng expected occurrence hiện hành và confidence từ nguồn/lịch sử; conservative giảm inflow không chắc chắn, dùng upper bound của variable essential outflow và loại receivable chưa đủ confidence; optimistic chỉ thêm inflow có evidence, không tự giả định lợi nhuận thị trường.
+- Dự báo **chi phí category** dùng hierarchy: scheduled/committed amount → user-entered plan → robust historical estimate. Historical estimate mặc định là median của tối đa 3–6 chu kỳ hoàn chỉnh gần nhất, loại transfer/principal/refund duplicate; category mùa vụ hoặc one-off không được extrapolate nếu chưa có rule. Khi dữ liệu ít hơn 2 chu kỳ, hiển thị “chưa đủ dữ liệu” hoặc range rộng thay vì số điểm.
+- Range chi phí dùng empirical quantile khi đủ dữ liệu (`P25/P50/P75` theo scenario); nếu chưa đủ, dùng user tolerance/range. Không dùng average đơn giản khi outlier làm sai ý nghĩa.
+- Mỗi run lưu `as_of`, horizon, timezone, scenario, input/source IDs, confidence weights, assumption overrides và `calculation_version`; thay đổi transaction, commitment, goal allocation hoặc plan policy phải invalidate/recompute idempotently.
+- Không tự đưa unrealized investment gain vào cash forecast. FX/market-price movement chỉ ảnh hưởng valuation scenario riêng, không tạo cash inflow.
+
 ### 6.6 Goals
 
 - Goal types: emergency fund, purchase, debt payoff, education, home, retirement/custom.
@@ -364,6 +386,9 @@ STS = eligible liquid cash
 - Một số tiền không được tính 100% cho nhiều goal trừ khi user chủ động cho phép overlap và UI cảnh báo.
 - Goal progress = value of allocated eligible assets / target value; hiển thị contributed vs market gain khi có investment.
 - Goal projection dùng expected contributions, returns **[nếu user nhập]**, inflation **[optional]**, confidence và scenario; không mặc định hứa lợi nhuận.
+- User tự tạo/sửa/pause/archive goal và chọn cách liên kết: phần trăm/số tiền của account balance, quantity/value của holding, tagged transactions, recurring contribution hoặc plan bucket. Link là allocation/projection, không di chuyển tiền và không sửa posted fact.
+- Contribution thực tế được match từ linked transfer/investment activity hoặc user xác nhận; projection tách `actual contributed`, `market movement`, `planned contribution` và `gap`. Một source allocation không được tính 100% cho nhiều goal trừ khi user cho phép overlap sau cảnh báo.
+- Goal có thể sinh plan draft cho khoản đóng góp định kỳ; mọi thay đổi hiển thị diff và cần user xác nhận. Xóa link không xóa account, holding hay transaction nguồn.
 
 ### 6.7 Debts payable và receivables
 
@@ -385,7 +410,7 @@ Fields: counterparty alias, principal original/outstanding, currency, disburseme
 
 ### 6.8 Investments
 
-**Asset classes:** cash, term deposit, gold, listed equity, bond, crypto, fund certificate, real estate/other asset (manual valuation). Portfolio chứa accounts/holdings; instrument định danh tách khỏi position.
+**Asset classes:** cash/money-market, term deposit, gold/precious metal, listed equity, ETF, mutual/open-ended fund certificate, closed-end fund, bond (government/corporate), crypto/tokenized asset, REIT, pension/insurance cash value, employee equity/RSU, collectibles (art/watch/diamond), business/private equity, real estate và other asset. Portfolio chứa accounts/holdings; instrument định danh tách khỏi position.
 
 **Activity types:** buy, sell, dividend/distribution, interest/coupon, fee, tax, deposit/withdrawal, transfer-in/out, split, bonus/right issue, merger/spin-off/manual corporate action, valuation adjustment.
 
@@ -401,6 +426,8 @@ Fields: counterparty alias, principal original/outstanding, currency, disburseme
 - Corporate actions phải điều chỉnh quantity/cost basis mà không tạo P&L giả; item chưa hỗ trợ vào review queue.
 - Giá có source, observed_at, fetched_at, currency, quality/staleness và manual/provider flag.
 - Asset không có market price dùng manual valuation; UI không trộn “live” và “manual” mà không nhãn.
+- Với asset có giá/NAV/benchmark niêm yết công khai, Market Data phải ưu tiên tìm provider API có quyền sử dụng trước khi dùng manual valuation. UI chọn instrument qua searchable dropdown/catalog (`provider_id`, symbol, exchange, ISIN/contract khi có), không dựa vào free-text symbol làm định danh chính; free-text chỉ là fallback “không tìm thấy” và đi To Review.
+- Provider coverage tối thiểu phải được đánh giá theo nhóm: HOSE/HNX/UPCoM equity/ETF, quỹ/NAV Việt Nam, trái phiếu, vàng/kim loại quý, crypto, FX và global securities. Không có coverage hoặc license phù hợp phải hiển thị manual/last-known + stale, tuyệt đối không thay bằng 0.
 - Benchmark là optional; so sánh cùng period/currency, không bỏ qua cash flows.
 - Asset location/account được giữ để phân biệt nơi sở hữu và tránh double-count.
 
@@ -431,7 +458,7 @@ Reopening month yêu cầu reason, tạo snapshot version mới và recompute do
 
 ### 7.1 Onboarding đến first value
 
-1. User tạo tài khoản, chọn Việt Nam/VND/timezone và consent cần thiết.
+1. User tạo tài khoản, tự chọn ngôn ngữ và base currency, rồi xác nhận consent cần thiết. Theme/timezone dùng theo OS/browser; không hỏi hoặc tự lưu location trong onboarding.
 2. Chọn 1–3 ưu tiên: kiểm soát chi, tránh thiếu tiền, trả nợ, tích lũy, đầu tư, tổng tài sản.
 3. Tạo account đầu tiên hoặc import file; nhập opening balance/date.
 4. Hệ thống đề xuất category mapping và duplicate review; không auto-commit item confidence thấp.
@@ -504,14 +531,14 @@ Priority: **M** Must, **S** Should, **C** Could. Phase ghi `P1/P2/P3`.
 
 ### 8.1 Identity, setup và data rights
 
-| ID     | Pri/Phase | Requirement                         | Acceptance criteria                                                                                                                                          |
-| ------ | --------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| FR-001 | M/P1      | Tạo tài khoản và personal workspace | Given user hợp lệ, when signup hoàn tất, then workspace riêng được tạo với VND/Asia-Ho_Chi_Minh mặc định có thể sửa; không lộ dữ liệu cross-tenant.          |
-| FR-002 | M/P1      | Onboarding theo mục tiêu            | User có thể chọn/bỏ qua nhu cầu; chỉ module liên quan được ưu tiên; bỏ qua không chặn first value.                                                           |
-| FR-003 | M/P1      | Preferences/locale                  | Đổi locale, timezone, base currency có preview tác động; base-currency change không sửa original amounts.                                                    |
-| FR-004 | M/P1      | Export dữ liệu                      | User request export machine-readable; bundle chứa entities, attachments manifest, schema/version và hoàn thành theo SLA NFR.                                 |
-| FR-005 | M/P1      | Delete account/data                 | UI hiển thị scope, retention ngoại lệ pháp lý và confirm; dữ liệu bị soft-delete ngay khỏi UI, hard-delete theo SLA, có receipt không chứa dữ liệu nhạy cảm. |
-| FR-006 | S/P2      | Module opt-in/pin                   | Bật/tắt/pin module không xóa dữ liệu và navigation cập nhật trên web/mobile.                                                                                 |
+| ID     | Pri/Phase | Requirement                         | Acceptance criteria                                                                                                                                                                                                   |
+| ------ | --------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-001 | M/P1      | Tạo tài khoản và personal workspace | Given user hợp lệ, when signup hoàn tất, then workspace riêng được tạo; user tự chọn language/base currency, timezone/theme hiệu lực ban đầu theo OS/browser, không suy diễn location; không lộ dữ liệu cross-tenant. |
+| FR-002 | M/P1      | Onboarding theo mục tiêu            | User có thể chọn/bỏ qua nhu cầu; chỉ module liên quan được ưu tiên; bỏ qua không chặn first value.                                                                                                                    |
+| FR-003 | M/P1      | Preferences/locale                  | Đổi language, timezone/theme override và base currency có preview tác động; timezone/theme có thể quay về `Theo thiết bị`; base-currency change không sửa original amounts.                                           |
+| FR-004 | M/P1      | Export dữ liệu                      | User request export machine-readable; bundle chứa entities, attachments manifest, schema/version và hoàn thành theo SLA NFR.                                                                                          |
+| FR-005 | M/P1      | Delete account/data                 | UI hiển thị scope, retention ngoại lệ pháp lý và confirm; dữ liệu bị soft-delete ngay khỏi UI, hard-delete theo SLA, có receipt không chứa dữ liệu nhạy cảm.                                                          |
+| FR-006 | S/P2      | Module opt-in/pin                   | Bật/tắt/pin module không xóa dữ liệu và navigation cập nhật trên web/mobile.                                                                                                                                          |
 
 ### 8.2 Accounts và transactions
 
@@ -824,6 +851,10 @@ Backend định nghĩa canonical interfaces độc lập provider:
 
 Mỗi adapter chịu mapping symbol/exchange/currency, rate limit, license, freshness, error taxonomy và provenance. Provider payload gốc được lưu tối thiểu theo license/retention; canonical record có checksum/version.
 
+Instrument catalog/resolution là contract riêng với price snapshots: dropdown tìm kiếm theo name/symbol/exchange nhưng lưu stable internal instrument ID + provider mapping. Catalog refresh không được đổi mapping của holding đã có mà không review.
+
+Candidate evaluation ban đầu: SSI cho symbol/catalog và market data chứng khoán Việt Nam; FiinGroup cho fund/NAV và coverage tài sản Việt Nam; CoinGecko cho crypto; licensed ICE/LBMA-compatible feed cho gold benchmark. Đây là shortlist để spike coverage/license/SLA, không phải provider đã chốt.
+
 ### 12.2 Provider selection criteria
 
 - Coverage Việt Nam: HOSE/HNX/UPCoM, funds/bonds/gold nếu khả dụng; crypto và FX.
@@ -1019,24 +1050,49 @@ Không A/B test làm giảm security/privacy, che nguồn dữ liệu, dùng urg
 ### 16.1 Nguyên tắc
 
 - User trả tiền cho utility, compute, convenience và service — không trả bằng việc bán dữ liệu.
-- Core data rights, export/delete, basic ledger và correction không bị paywall.
+- Core data rights (`FR-004` export, `FR-005` delete), basic double-entry ledger (`FR-012`), quy tắc hạch toán đúng (transfer `FR-013`, tách gốc–lãi–phí `FR-042`) và đối chiếu/sửa sai cơ bản không bao giờ bị paywall.
+- Không giới hạn số lượng giao dịch nhập thủ công ở bản Free để tránh làm hỏng tính đầy đủ của dữ liệu — điều kiện tiên quyết của North-star metric **Weekly Financial Clarity (WFC)**.
 - Không nhận commission làm thay đổi thứ tự suggestion mà không disclosure; ưu tiên không có ads/lender lead-gen trong giai đoạn đầu.
-- Pricing không khai thác khó khăn tài chính hoặc tạo “pay to avoid harm”.
+- Pricing không khai thác khó khăn tài chính hoặc tạo “pay to avoid harm” (ví dụ: không khóa cảnh báo quá hạn nợ/thẻ tín dụng cơ bản hay cảnh báo âm Safe-to-spend).
 
-### 16.2 Hypotheses to test
+### 16.2 Value metric và phân tầng gói (Packaging hypothesis)
 
-| Model                 | Free                                                                                                | Paid                                                                                                         | Rủi ro/guardrail                                    |
-| --------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| Freemium subscription | Accounts/transactions giới hạn hợp lý, basic net worth, manual entry/import nhỏ, core debt tracking | Unlimited history/imports, advanced forecast/scenarios, portfolio analytics, OCR, custom reports, connectors | Free vẫn phải cho bức tranh đúng; không khóa export |
-| Single premium tier   | Core product                                                                                        | 79k–149k VND/tháng hoặc annual discount **[price hypothesis]**                                               | Test willingness-to-pay, không dùng fake discount   |
-| Family tier P3        | Personal                                                                                            | Shared spaces/roles and family goals                                                                         | Consent/abuse/privacy model trước monetization      |
-| B2B2C benefit P3      | N/A                                                                                                 | Employer-sponsored access không chia sẻ individual data                                                      | Contract cấm employer access/segmentation           |
+Đơn vị phân tách giá trị (Value Metric) giữa Free và Paid dựa trên **Tầm nhìn thời gian, Độ sâu tài sản/đầu tư và Mức độ tự động hóa**, chia làm 2 nấc trả phí phù hợp với khả năng chi trả tại Việt Nam:
+- **Zenval Core (Free Forever) — “Bức tranh đúng hôm nay”:** Ghi chép thủ công không giới hạn, sổ cái đúng bản chất kế toán, nhắc thói quen 21:00 và nhắc hạn nợ cơ bản, Safe-to-spend cơ bản, dự báo dòng tiền ngắn hạn (14–30 ngày, Base scenario) và theo dõi danh mục đầu tư với giá cập nhật thủ công.
+- **Zenval Plus (`39k VND/tháng` | `349k VND/năm`) — “Dòng tiền, Trả nợ & Kế hoạch thích nghi”:** Dành cho đa số người dùng cần kiểm soát dòng tiền, thu nhập biến động, trả nợ và lập kế hoạch mục tiêu với mức giá chỉ `~29.000 VND/tháng` (`<1.000 VND/ngày`). Mở khóa dự báo đa kịch bản (`P25/P50/P75`), Monthly Close, mô phỏng trả nợ What-If, Explainable Suggestions cho dòng tiền/nợ/mục tiêu và 50 lượt Receipt OCR/tháng.
+- **Zenval Pro (`79k VND/tháng` | `690k VND/năm`) — “Đầu tư đa tài sản & Tự động hóa chuyên sâu”:** Dành cho nhà đầu tư nắm giữ cổ phiếu, ETF, chứng chỉ quỹ, trái phiếu, vàng/bạc, crypto và đa tiền tệ (`~57.500 VND/tháng` khi mua năm). Bao gồm toàn bộ gói Plus cộng với tự động cập nhật giá thị trường & FX từ provider catalog, hiệu suất XIRR/TWR/Benchmark, cầu nối phân rã hiệu suất, corporate actions, lot-level/FIFO, 150 lượt Receipt OCR/tháng và xuất báo cáo PDF.
+- **Zenval Family / Connected (Phase 3, `149k–199k VND/tháng`) — “Hệ sinh thái & Gia đình”:** Không gian tài chính chung có phân quyền riêng tư và đồng bộ tự động read-only với ngân hàng/công ty chứng khoán/ví điện tử.
 
-### 16.3 Monetization validation
+| Nhóm năng lực | Zenval Core (Free) | Zenval Plus (`39k/tháng` \| `349k/năm`) **[price hypothesis]** | Zenval Pro (`79k/tháng` \| `690k/năm`) **[price hypothesis]** | Zenval Family / Connected (Phase 3) |
+| --- | --- | --- | --- | --- |
+| **Sổ cái & Nhập liệu** | Giao dịch thủ công không giới hạn (`FR-011`), double-entry (`FR-012`), transfer/split/refund (`FR-013`–`014`), danh mục tiếng Việt (`ADD-02`), CSV/XLSX import cơ bản (`FR-017`), nhắc 21:00 (`ADD-06`) | **Receipt OCR** (`FR-020`, fair-use **50 bill/tháng**), smart review rules & phân loại tự động hàng loạt, reconciliation nâng cao (`FR-019`) | Toàn bộ Plus + **Receipt OCR mở rộng (150 bill/tháng)** | Toàn bộ quyền lợi Pro cho các thành viên trong hộ gia đình |
+| **Cam kết, Nợ & Phải thu** | Fixed commitments (`FR-022`–`025`), hồ sơ vay/cho vay & tách gốc–lãi–phí (`FR-040`–`044`), nhắc hạn thẻ tín dụng/khoản vay (`ADD-05`) | **Mô phỏng trả nợ What-If** (Snowball/Avalanche, trả thêm gốc, đổi lãi suất `FR-045`, `ADD-11`), quản lý write-off & thu hồi nợ xấu (`FR-046`) | Toàn bộ quyền lợi Plus | Chia sẻ nghĩa vụ nợ/hóa đơn chung với quyền hiển thị theo vai trò |
+| **Kế hoạch, Dự báo & Đóng sổ** | Safe-to-spend cơ bản (`FR-032`), dự báo dòng tiền ngắn hạn (Base scenario), 1–2 mục tiêu hoạt động (`FR-034`), báo cáo Net worth & P&L chuẩn (`FR-035`–`036`) | **Dự báo đa kịch bản** (`Conservative/Base/Optimistic`, dải `P25/P50/P75`, tầm nhìn 3–12 tháng `FR-031`, `ADD-11`), chu kỳ lương tùy chỉnh (`FR-038`), thư viện template tài chính (`ADD-11`), không giới hạn Goals & kiểm tra overlap (`ADD-09`), **Monthly Close** khóa snapshot (`FR-037`) | Toàn bộ quyền lợi Plus + liên kết biến động danh mục đầu tư đa tài sản vào tiến độ Goals | Mục tiêu & ngân sách gia đình với mô hình domestic safety (`OQ-11`) |
+| **Đầu tư & Market Data** | Nhập theo đơn giá/tổng giá trị (`ADD-03`), cập nhật giá thủ công (`FR-052`), lãi/lỗ cơ bản (Simple gain) | Theo dõi danh mục cơ bản, nhắc cập nhật định giá thủ công định kỳ, tỷ giá FX tham chiếu EOD cơ bản | **Tự động cập nhật giá thị trường & FX** theo catalog (`FR-057`, `ADD-04`, `ADD-08`), hiệu suất **XIRR, TWR & Benchmark** (`FR-055`), cầu nối phân rã hiệu suất (`FR-053`), corporate actions & lot-level/FIFO (`FR-054`–`055`) | **Đồng bộ tự động Read-only** với Bank/Broker/E-wallet (`FR-056`), xuất dữ liệu phục vụ thuế |
+| **Gợi ý & Báo cáo** | Cảnh báo thiếu hụt tiền mặt cơ bản & nhắc chất lượng dữ liệu (`Data quality prompt`) | **Explainable Suggestion Engine** (`FR-060`–`064`) cho thanh khoản, dòng tiền, trả nợ và mục tiêu kèm 1-click *Apply to plan* diff | Toàn bộ Plus + gợi ý cân đối thanh khoản danh mục & xuất báo cáo PDF định kỳ | Gợi ý tối ưu dòng tiền cấp hộ gia đình; B2B2C employee wellness option |
+| **Quyền dữ liệu** | Full machine-readable Export (`FR-004`) & Delete (`FR-005`) | Full Export/Delete + lưu trữ lịch sử snapshot/attachment | Full Export/Delete + lịch sử snapshot/attachment & audit mở rộng | Kiểm soát consent và thu hồi quyền chia sẻ độc lập |
 
-- Van Westendorp/interviews sau khi user đã trải nghiệm value, fake-door có disclosure và không thu tiền.
-- Metrics: conversion, voluntary retention, refund/churn reason, trust score, WFC by paid/free.
-- Kill criteria: monetization làm giảm export visibility, tăng misleading suggestion, hoặc tạo conflict-of-interest không thể mitigate.
+### 16.3 Cơ chế chuyển đổi, mức giá và Unit Economics (Cost-to-Serve guardrails)
+
+- **Mức giá giả thuyết cần kiểm chứng (Mô hình 2 nấc trả phí Plus & Pro):**
+  - **Zenval Plus (Dòng tiền & Kế hoạch):** `39.000 VND/tháng` hoặc **`349.000 VND/năm`** (~`29.080 VND/tháng` — dưới `1.000 VND/ngày`, tiết kiệm ~25%). Giải quyết rào cản tâm lý cho đại đa số người Việt, trong khi không phát sinh chi phí bản quyền dữ liệu chứng khoán/trái phiếu chuyên sâu.
+  - **Zenval Pro (Đầu tư đa tài sản & Tự động hóa):** `79.000 VND/tháng` hoặc **`690.000 VND/năm`** (~`57.500 VND/tháng`, tiết kiệm ~27%). Hướng đúng vào nhóm nhà đầu tư có danh mục tài sản thực tế, sẵn sàng chi trả cho tự động hóa giá thị trường và phân tích XIRR/TWR/Corporate actions.
+  - **Không bán gói Lifetime (Trọn đời) đại trà:** Do Zenval có chi phí biến đổi định kỳ theo người dùng (Market Data API, OCR, lưu trữ và connector sau này), chỉ cân nhắc gói *Founding Member có thời hạn (2–3 năm)* hoặc ưu đãi giá năm đầu cho early adopters.
+- **Reverse Trial 45 ngày (thay vì 7–14 ngày):**
+  - Theo `FR-060`, hệ thống cần tối thiểu 30 ngày và đủ chu kỳ dữ liệu để mở khóa gợi ý cá nhân hóa, đồng thời user cần đi qua kỳ `Monthly Close` đầu tiên (`FR-037`).
+  - User mới được trải nghiệm đầy đủ tính năng **Plus/Pro trong 45 ngày** (không yêu cầu thẻ trước). Khi hết hạn mà không nâng cấp, tài khoản hạ về **Zenval Core (Free)** êm ái: giữ nguyên toàn bộ dữ liệu lịch sử, giữ snapshot giá gần nhất (chuyển sang trạng thái manual/stale) và không khóa bất kỳ quyền export/delete nào.
+- **Ràng buộc Unit Economics (Cost-to-Serve) để giữ biên lợi nhuận gộp >75% ở cả gói Plus (39k) và Pro (79k):**
+  1. **Tách chi phí Market Data (`ADD-04`, `ADD-08`) sang gói Pro:** Chỉ gói Pro mới tiêu thụ dữ liệu giá thị trường tự động đa tài sản. Worker chỉ đồng bộ giá ở cấp độ danh mục mã (`instrument_id`) và lưu vào `PriceSnapshot` dùng chung toàn hệ thống theo lịch EOD hoặc 2–4 mốc/ngày; không dùng real-time tick streaming tính phí royalty trên từng user và không gọi provider API trực tiếp theo từng request của user.
+  2. **Tối ưu Receipt OCR bằng On-Device Text Extraction + LLM JSON Parse (`FR-020`):** Nhận diện chữ ngay trên thiết bị/trình duyệt (Apple Vision / ML Kit / WebAssembly) hoặc nén ảnh WebP nhẹ trước khi bóc tách JSON để kéo chi phí xuống `~15–30 VND/hóa đơn`, kết hợp **Fair-Use Quota: 50 hóa đơn/tháng cho Plus** (chi phí `<1.500 VND/tháng`) và **150 hóa đơn/tháng cho Pro** (chi phí `<4.500 VND/tháng`).
+  3. **Forecast & Suggestion Engine (`FR-031`, `FR-060`):** Vận hành bằng deterministic rule/scenario engine (`D-008`), không phụ thuộc gọi LLM trên mỗi lần tính toán nên chi phí marginal compute của gói Plus chỉ `~1.800 VND/user/tháng` (đạt biên lợi nhuận gộp **>80%** ngay cả ở mức giá `349k/năm`).
+  4. **Kênh thanh toán ưu tiên VietQR:** Ưu tiên thanh toán trực tiếp trên Web/PWA qua **VietQR chuyển khoản định danh tự động** (phí `~0,5%–1,2%`) để không bị phí cố định của cổng thẻ quốc tế ăn mòn giao dịch nhỏ `39.000 VND`. Ở Phase 3, đồng bộ tự động Bank/Broker (`FR-056`) có chi phí aggregator theo kết nối được tách vào gói **Connected/Family (`149k–199k VND/tháng`)** hoặc add-on riêng.
+
+### 16.4 Monetization validation và lộ trình bật theo Phase
+
+- **Phase 0:** Đưa bài kiểm tra **Van Westendorp** (4 câu hỏi độ nhạy giá cho cả 2 nấc Plus 39k và Pro 79k) và phân nhóm tính năng (**MaxDiff**) vào vòng phỏng vấn 15–20 người dùng & Diary Study; chốt báo giá bản quyền B2B Market Data (`ADD-04`) để xác nhận sàn chi phí (cost floor).
+- **Phase 1 (MVP):** Chưa xây hệ thống billing/paywall phức tạp để tránh phình scope; gắn nhãn nhẹ `Plus` / `Pro (Miễn phí trong bản Beta)` trên các tính năng nâng cao đã có ở P1 (dự báo đa kịch bản `ADD-11`, mô phỏng trả nợ `FR-045` → nhãn `Plus`; auto market price `ADD-08` → nhãn `Pro`) để đo tỷ lệ sử dụng thực tế của từng phân khúc.
+- **Phase 2:** Chính thức bật gói **Zenval Plus** và **Zenval Pro** kèm cơ chế **45-Day Reverse Trial** khi hoàn tất Suggestion Engine (`FR-060`–`064`), Monthly Close (`FR-037`), Receipt OCR (`FR-020`) và Portfolio TWR/Corporate Actions (`FR-054`–`055`).
+- **Metrics & Kill criteria:** Đo conversion theo từng gói (Plus vs. Pro), tỷ lệ nâng cấp từ Plus lên Pro, voluntary retention, refund/churn reason, trust score và WFC giữa nhóm Paid vs. Free. Dừng hoặc điều chỉnh ngay nếu monetization làm giảm tỷ lệ hoàn tất nhập liệu cơ bản, giảm export visibility, tăng misleading suggestion hoặc tạo xung đột lợi ích không thể kiểm soát.
 
 ## 17. Risks và mitigations
 
@@ -1154,6 +1210,39 @@ Không A/B test làm giảm security/privacy, che nguồn dữ liệu, dùng urg
 | Apply to plan     | Chấp nhận thay đổi kế hoạch; không thực hiện giao dịch thật                                                                        |
 
 ### 20.2 Công thức tài chính chuẩn
+
+#### Các khung tài chính cá nhân phổ biến — chỉ là template tùy chỉnh
+
+Zenval có thể cung cấp các template dưới đây để user bắt đầu nhanh, nhưng luôn hiển thị assumptions, cho phép đổi mọi tỷ lệ và không đánh giá user “đúng/sai” theo template:
+
+| Khung                              | Công thức khởi tạo                                                                           | Cách dùng an toàn trong Zenval                                                                   |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 50/30/20                           | 50% needs, 30% wants, 20% saving/debt goals trên take-home income                            | Template ngân sách; user sửa bucket/tỷ lệ, tổng = 100%                                           |
+| Fidelity 50/15/5                   | ≤50% essential, 15% retirement trên pretax income, 5% emergency saving trên take-home income | Không cộng trực tiếp các denominator khác nhau; UI giải thích pretax vs take-home                |
+| Emergency fund                     | 3–6 tháng essential expenses                                                                 | Goal range, cá nhân hóa theo biến động thu nhập, người phụ thuộc và bảo hiểm                     |
+| Pay yourself first                 | `saving/investing contribution` được reserve trước discretionary spending                    | Allocation policy, không tự chuyển tiền                                                          |
+| Zero-based / give every unit a job | `income − planned buckets = 0`                                                               | Optional envelope plan; transfer giữa account vẫn non-P&L                                        |
+| Debt snowball                      | Ưu tiên dư nợ nhỏ nhất sau minimum payments                                                  | Simulation only; có thể tốn nhiều lãi hơn avalanche                                              |
+| Debt avalanche                     | Ưu tiên APR hiệu lực cao nhất sau minimum payments                                           | Simulation dùng rate/fee/penalty thực; không tự trả nợ                                           |
+| Retirement milestones              | 1× salary @30, 3× @40, 6× @50, 8× @60, 10× @67                                               | Benchmark tham khảo, không phù hợp mọi quốc gia/thu nhập                                         |
+| 4% withdrawal rule                 | Năm đầu rút khoảng 4% portfolio, các năm sau điều chỉnh inflation                            | Scenario tham khảo cho horizon khoảng 30 năm; không phải mức “an toàn” được bảo đảm tại Việt Nam |
+
+Nguồn nghiên cứu ban đầu: CFPB 50/30/20; Fidelity 50/15/5, emergency fund và retirement milestones; Bengen/Trinity research cho withdrawal-rate scenarios. Product/Legal phải review nội dung, thị trường áp dụng và disclaimer trước khi public.
+
+#### Forecast chi phí và dòng tiền
+
+```text
+historical_category_estimate = median(eligible actuals in last N complete cycles)
+scenario_cost_conservative = max(committed/user upper bound, historical P75)
+scenario_cost_base = committed/user plan if present, else historical P50
+scenario_cost_optimistic = committed/user lower bound if valid, else historical P25
+
+projected_balance[d] = opening_projected_balance
+  + cumulative(weighted inflows through d)
+  - cumulative(expected cash outflows through d)
+```
+
+`N` mặc định 3–6 và được version hóa; calculation loại transfer, debt/receivable principal, duplicated pending/posted pair và accounting reversal đã net. Tax/fee/interest giữ đúng P&L/cash meaning. Kết quả luôn kèm source, `as_of`, range/confidence và version.
 
 **Net worth**
 

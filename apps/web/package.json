@@ -6,7 +6,7 @@
     "build": "next build --webpack",
     "dev": "next dev --port 3000",
     "lint": "biome lint .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

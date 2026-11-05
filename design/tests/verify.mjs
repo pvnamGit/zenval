@@ -8,8 +8,10 @@ import {
   financialStates,
   fixedCommitments,
   iaSubViews,
+  instrumentsForAssetClass,
   investmentHoldings,
   prototypeViews,
+  resolveInstrumentSelection,
   reviewRecords,
   todayCashflowSummary,
 } from "../model.mjs";
@@ -21,7 +23,7 @@ const css = readFileSync(resolve(root, "styles.css"), "utf8");
 const js = readFileSync(resolve(root, "app.js"), "utf8");
 
 const checks = [
-  ["links local CSS", html.includes('href="styles.css"')],
+  ["links local CSS", /href="styles\.css(?:\?[^"]+)?"/.test(html)],
   ["links local module JavaScript", /src="app\.js(?:\?[^"]+)?" type="module"/.test(html)],
   ["has mobile viewport-fit", html.includes("viewport-fit=cover")],
   ["has no framework/runtime CDN", !/(react|nextjs|vue|angular|svelte|cdn\.)/i.test(html)],
@@ -58,11 +60,47 @@ const checks = [
       iaSubViews.plan.includes("suggestions"),
   ],
   [
-    "exposes today's total inflow/outflow on #home first dashboard",
-    js.includes('id="home-today-cashflow"') &&
+    "keeps #home focused on today's spending and financial health",
+    js.includes('class="home-minimal"') &&
+      js.includes('class="card home-spending-card"') &&
+      js.includes('class="card financial-health-card"') &&
+      js.includes('derivedAttrs("cashFlow")') &&
+      js.includes('derivedAttrs("netWorth")') &&
+      !js.includes('id="home-today-cashflow"') &&
+      !js.includes('const subItems = [\n      ["all", t("homeSubAll")]'),
+  ],
+  [
+    "preserves today's transfer exclusion in the spending hero",
+    js.includes('class="today-spending-facts"') &&
+      js.includes('data-pnl-impact="false"') &&
       Boolean(todayCashflowSummary.inflowDisplay) &&
       Boolean(todayCashflowSummary.outflowDisplay) &&
       todayCashflowSummary.entries.some((e) => e.kind === "transfer" && e.pnlImpact === false),
+  ],
+  [
+    "home signal links open their owning detail sections",
+    js.includes('data-view="plan" data-plan-sub="forecast"') &&
+      js.includes('data-view="reports" data-report-sub="netWorthBridge"') &&
+      js.includes("resolveNavigationTarget(state, control.dataset)") &&
+      js.includes('data-view="transactions" data-tx-sub="ledger"'),
+  ],
+  [
+    "home derived values preserve state, freshness, evidence, explanation, and focus disclosure",
+    js.includes("status(derivedValues.netWorth.state)") &&
+      js.includes("status(derivedValues.todayCashflow.state)") &&
+      js.includes("todaySummary.asOf.slice(11, 16)") &&
+      js.includes('data-health-summary="positive-cash-low"') &&
+      js.includes('data-based-on="cashFlow safeToSpend netWorth"') &&
+      js.includes("status(derivedValues.cashFlow.state)") &&
+      js.includes('id="explain-today"') &&
+      js.includes('id="top-quick-add"') &&
+      !js.includes('id="home-quick-add"'),
+  ],
+  [
+    "quick add uses real local time and restores focus after routing to the ledger",
+    js.includes("time: localTimeHHMM()") &&
+      js.includes('state.returnFocusId = "main-content"') &&
+      js.includes('state.txSub = "ledger"'),
   ],
   [
     "exposes monthly fixed commitments screen and creation dialog",
@@ -78,6 +116,41 @@ const checks = [
       js.includes('data-action="investment-add"') &&
       js.includes('data-action="save-investment"') &&
       investmentHoldings.some((h) => h.doubleCountProtected === true),
+  ],
+  [
+    "uses a provider catalog dropdown for investment instruments",
+    js.includes('<select id="inv-symbol-input">') &&
+      instrumentsForAssetClass("equity").some((instrument) => instrument.symbol === "FPT") &&
+      resolveInstrumentSelection("ssi:FPT:HOSE", "equity").ok === true &&
+      resolveInstrumentSelection("ssi:FPT:HOSE", "gold").ok === false,
+  ],
+  [
+    "supports user-created linked goals and editable allocation ratios",
+    js.includes('data-action="goal-add"') &&
+      js.includes('data-action="save-goal"') &&
+      js.includes('data-action="goal-edit"') &&
+      js.includes('data-action="goal-pause"') &&
+      js.includes('data-action="goal-archive"') &&
+      js.includes('data-action="save-allocation"') &&
+      js.includes("Allocation ratios must total 100%"),
+  ],
+  [
+    "routes manual instruments to the rendered review inbox",
+    js.includes("state.customReviews") &&
+      js.includes("createManualInstrumentReview(instrument, state.locale)") &&
+      js.includes('state.reviewBucket === "review"'),
+  ],
+  [
+    "lets users choose language and base currency while device owns theme and timezone defaults",
+    js.includes('id="base-currency-input"') &&
+      js.includes('state.baseCurrency === "USD"') &&
+      js.includes('id="timezone-mode-input"') &&
+      js.includes('data-action="theme-system"') &&
+      js.includes("From device · Never inferred from location/IP"),
+  ],
+  [
+    "does not repeat a plus glyph in action labels",
+    !/["'>]\+ (Tạo|Thêm|Ghi|Create|Add|Log)/.test(js),
   ],
   [
     "exposes debts & receivables screen with ERV and principal non-P&L rail",

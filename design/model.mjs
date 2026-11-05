@@ -64,6 +64,80 @@ export function parsePercentageBps(input) {
   return scaled;
 }
 
+export function validateAllocationPercentages(values) {
+  const parsed = values.map((value) => Number(value));
+  return (
+    parsed.length > 0 &&
+    parsed.every((value) => Number.isInteger(value) && value >= 0 && value <= 100) &&
+    parsed.reduce((total, value) => total + value, 0) === 100
+  );
+}
+
+export const prototypeInstrumentCatalog = [
+  { id: "ssi:FPT:HOSE", symbol: "FPT", assetClass: "equity", label: "FPT · HOSE" },
+  { id: "ssi:VNM:HOSE", symbol: "VNM", assetClass: "equity", label: "VNM · HOSE" },
+  { id: "ssi:MWG:HOSE", symbol: "MWG", assetClass: "equity", label: "MWG · HOSE" },
+  { id: "fiin:DCDS", symbol: "DCDS", assetClass: "fund", label: "DCDS · Fund NAV" },
+  { id: "coingecko:bitcoin", symbol: "BTC", assetClass: "crypto", label: "BTC · CoinGecko" },
+];
+
+export function instrumentsForAssetClass(assetClass) {
+  return prototypeInstrumentCatalog.filter((instrument) => instrument.assetClass === assetClass);
+}
+
+export function resolveInstrumentSelection(selectionId, assetClass, manualName = "") {
+  if (selectionId === "manual") {
+    const normalizedName = String(manualName).trim();
+    if (!normalizedName) return { ok: false, reason: "manual-name-required" };
+    return {
+      ok: true,
+      instrumentId: `manual:${normalizedName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      symbol: normalizedName.toLocaleUpperCase(),
+      assetClass,
+      source: "manual",
+      needsReview: true,
+    };
+  }
+  const instrument = prototypeInstrumentCatalog.find((candidate) => candidate.id === selectionId);
+  if (!instrument || instrument.assetClass !== assetClass)
+    return { ok: false, reason: "catalog-class-mismatch" };
+  return { ok: true, ...instrument, source: "provider", needsReview: false };
+}
+
+export function applyPreferenceChange(preferences, key, value) {
+  if (!["baseCurrency", "timezoneMode"].includes(key)) return preferences;
+  return { ...preferences, [key]: value };
+}
+
+export function createManualInstrumentReview(instrument, locale = "vi") {
+  if (!instrument?.needsReview) return null;
+  return {
+    id: `review-${instrument.instrumentId}`,
+    kind: "manualInstrument",
+    merchant: instrument.symbol,
+    amount: locale === "vi" ? "Chưa định giá" : "Not valued",
+    pnlImpact: false,
+  };
+}
+
+export function allocatedGoalPercentage(goals, link, editingGoalId = null) {
+  return goals
+    .filter((goal) => goal[4] !== editingGoalId && goal[5] === link)
+    .reduce((total, goal) => total + Number(goal[6] || 0), 0);
+}
+
+export function restoreGoalFormDraft(goal) {
+  return {
+    "goal-name-input": goal[0],
+    "goal-target-input": goal[10] || "",
+    "goal-allocation-input": String(goal[6]),
+    "goal-date-input": goal[7],
+    "goal-priority-input": goal[8],
+    "goal-link-input": goal[5],
+    "goal-overlap-input": String(goal[9]),
+  };
+}
+
 export function escapeHtml(input) {
   return String(input ?? "")
     .replaceAll("&", "&amp;")
@@ -86,12 +160,39 @@ export function formatVnd(amount) {
   return `${sign}${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₫`;
 }
 
+export function formatVndInput(raw) {
+  const value = String(raw ?? "");
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (!/^[+−-]?\d[\d. ]*$/.test(trimmed)) return value;
+  const sign =
+    trimmed.startsWith("-") || trimmed.startsWith("−")
+      ? "−"
+      : trimmed.startsWith("+")
+        ? "+"
+        : "";
+  const digits = trimmed
+    .replace(/^[+−-]/, "")
+    .replace(/[. ]/g, "")
+    .replace(/^0+(?=\d)/, "");
+  if (!digits) return "";
+  return `${sign}${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+}
+
 function formatSignedVnd(amount, positive) {
   return `${positive ? "+" : "−"}${formatVnd(amount).replace(/^−/, "")}`;
 }
 
 export function isTodayTransaction(date, todayDate) {
   return date === todayDate;
+}
+
+export function localTimeHHMM(date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
 }
 
 export function summarizeTodayCashflow(customTransactions, baseline) {
@@ -105,7 +206,8 @@ export function summarizeTodayCashflow(customTransactions, baseline) {
   for (const entry of entries) {
     const amount = parseVnd(entry.amount) ?? 0n;
     if (entry.kind === "income") inflow += amount < 0n ? -amount : amount;
-    if (entry.kind === "expense") outflow += amount < 0n ? -amount : amount;
+    if (entry.kind === "expense" && entry.pnlImpact !== false)
+      outflow += amount < 0n ? -amount : amount;
     if (entry.kind === "transfer") excludedTransfers += amount < 0n ? -amount : amount;
   }
   return {
@@ -297,8 +399,8 @@ export const todayCashflowSummary = {
       pnlImpact: true,
       state: "posted",
       time: "09:42",
-      titleVi: "WinMart — Thực phẩm gia đình",
-      titleEn: "WinMart — Groceries",
+      titleVi: "WinMart · Thực phẩm gia đình",
+      titleEn: "WinMart · Groceries",
       account: "Vietcombank · •• 2486",
       categoryVi: "Ăn uống & Siêu thị",
       categoryEn: "Groceries & dining",
@@ -577,7 +679,7 @@ export const investmentHoldings = [
     symbol: "CASH-TCBS",
     assetClass: "cash",
     assetLabelVi: "Tiền mặt chờ đầu tư (Liên kết chống tính trùng)",
-    assetLabelEn: "Brokerage cash (Linked — no double-count)",
+    assetLabelEn: "Brokerage cash (Linked, no double-count)",
     portfolio: "TCBS Tích sản",
     quantity: "VND",
     costBasis: "4.000.000 ₫",
@@ -651,8 +753,8 @@ export const debtObligations = [
   {
     id: "obl-vib-loan",
     direction: "payable",
-    counterpartyVi: "Ngân hàng VIB — Vay mua xe",
-    counterpartyEn: "VIB Bank — Auto loan",
+    counterpartyVi: "Ngân hàng VIB · Vay mua xe",
+    counterpartyEn: "VIB Bank · Auto loan",
     originalPrincipal: "120.000.000 ₫",
     outstandingPrincipal: "30.000.000 ₫",
     rate: "9,2%/năm · Dư nợ giảm dần",
@@ -745,12 +847,24 @@ export function shouldOpenGlobalSearch(dialogOpen) {
   return !dialogOpen;
 }
 
+export function resolveNavigationTarget(current, target) {
+  return {
+    view: target.view,
+    txSub: target.view === "transactions" && target.txSub ? target.txSub : current.txSub,
+    planSub: target.view === "plan" && target.planSub ? target.planSub : current.planSub,
+    repSub: target.view === "reports" && target.reportSub ? target.reportSub : current.repSub,
+  };
+}
+
 export function returnFocusId(dialog, surface) {
   if (dialog === "explain") return `explain-${surface}`;
   if (dialog === "commitment-add") return `open-commitment-${surface || "main"}`;
   if (dialog === "investment-add") return `open-investment-${surface || "main"}`;
+  if (dialog === "goal-add") return `open-goal-${surface || "main"}`;
   if (dialog === "debt-add") return `open-debt-${surface || "main"}`;
-  return surface === "mobile" ? "mobile-quick-add" : "top-quick-add";
+  if (surface === "mobile") return "mobile-quick-add";
+  if (surface === "home") return "home-quick-add";
+  return "top-quick-add";
 }
 
 export function mobileTopbarMinHeight(safeAreaTop, controlHeight = 44, verticalPadding = 16) {

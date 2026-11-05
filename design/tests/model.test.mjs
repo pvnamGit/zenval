@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import {
+  allocatedGoalPercentage,
   applyManualValuationsToHoldings,
+  applyPreferenceChange,
   buildReceivableDraft,
   calculateInvestmentAmounts,
   calculateRecoverableValue,
   commitmentPnlImpact,
+  createManualInstrumentReview,
   debtObligations,
   derivedValues,
   escapeHtml,
@@ -16,12 +19,15 @@ import {
   fixtureNetWorth,
   formatUnitPrice,
   formatVnd,
+  formatVndInput,
   iaSubViews,
+  instrumentsForAssetClass,
   investmentActivities,
   investmentActivityEffect,
   investmentHoldings,
   isEssentialCommitmentPriority,
   isTodayTransaction,
+  localTimeHHMM,
   mobileTopbarMinHeight,
   parsePercentageBps,
   parseScaledDecimal,
@@ -29,11 +35,15 @@ import {
   prototypeViews,
   recordManualValuation,
   recordsForBucket,
+  resolveInstrumentSelection,
+  resolveNavigationTarget,
   resolveView,
+  restoreGoalFormDraft,
   returnFocusId,
   shouldOpenGlobalSearch,
   summarizeTodayCashflow,
   todayCashflowSummary,
+  validateAllocationPercentages,
 } from "../model.mjs";
 
 assert.equal(parseVnd("2.500.000 ₫"), 2500000n);
@@ -43,10 +53,77 @@ assert.equal(parseVnd("12abc"), null);
 assert.equal(parseVnd("1.2"), null);
 assert.equal(parseScaledDecimal("2,5", 3), 2500n);
 assert.equal(parseScaledDecimal("2.1234", 3), null);
+assert.equal(validateAllocationPercentages([70, 20, 10]), true);
+assert.equal(validateAllocationPercentages([50, 30, 30]), false);
+assert.equal(validateAllocationPercentages([101, 0, -1]), false);
+assert.deepEqual(
+  instrumentsForAssetClass("equity").map((instrument) => instrument.symbol),
+  ["FPT", "VNM", "MWG"],
+);
+assert.equal(resolveInstrumentSelection("ssi:FPT:HOSE", "gold").ok, false);
+assert.equal(resolveInstrumentSelection("manual", "gold", "").ok, false);
+assert.deepEqual(resolveInstrumentSelection("manual", "gold", "Vàng SJC"), {
+  ok: true,
+  instrumentId: "manual:v-ng-sjc",
+  symbol: "VÀNG SJC",
+  assetClass: "gold",
+  source: "manual",
+  needsReview: true,
+});
+const preferences = applyPreferenceChange(
+  { baseCurrency: "VND", timezoneMode: "device" },
+  "baseCurrency",
+  "USD",
+);
+assert.deepEqual(preferences, { baseCurrency: "USD", timezoneMode: "device" });
+assert.deepEqual(applyPreferenceChange(preferences, "timezoneMode", "UTC"), {
+  baseCurrency: "USD",
+  timezoneMode: "UTC",
+});
+const manualInstrument = resolveInstrumentSelection("manual", "gold", "Vàng SJC");
+assert.deepEqual(createManualInstrumentReview(manualInstrument, "vi"), {
+  id: "review-manual:v-ng-sjc",
+  kind: "manualInstrument",
+  merchant: "VÀNG SJC",
+  amount: "Chưa định giá",
+  pnlImpact: false,
+});
+const linkedGoals = [
+  ["Goal A", "", "", "estimated", "goal-a", "tag:goal", 60],
+  ["Goal B", "", "", "estimated", "goal-b", "tag:goal", 30],
+];
+assert.equal(allocatedGoalPercentage(linkedGoals, "tag:goal"), 90);
+assert.equal(allocatedGoalPercentage(linkedGoals, "tag:goal", "goal-a"), 30);
+const editableGoal = [
+  "Mua nhà",
+  "0 / 500m",
+  "",
+  "estimated",
+  "goal-home",
+  "holding:FPT",
+  40,
+  "2028-06-01",
+  "low",
+  true,
+  "500000000",
+];
+assert.deepEqual(restoreGoalFormDraft(editableGoal), {
+  "goal-name-input": "Mua nhà",
+  "goal-target-input": "500000000",
+  "goal-allocation-input": "40",
+  "goal-date-input": "2028-06-01",
+  "goal-priority-input": "low",
+  "goal-link-input": "holding:FPT",
+  "goal-overlap-input": "true",
+});
 assert.equal(parsePercentageBps("65%"), 6500n);
 assert.equal(parsePercentageBps("100,01%"), null);
 assert.equal(parsePercentageBps("6%5"), null);
 assert.equal(formatVnd(2500000n), "2.500.000 ₫");
+assert.equal(formatVndInput("3545545"), "3.545.545");
+assert.equal(formatVndInput("232323"), "232.323");
+assert.equal(formatVndInput("3.545.545"), "3.545.545");
+assert.equal(formatVndInput("12abc"), "12abc");
 assert.equal(
   escapeHtml('<img src=x onerror="alert(1)">'),
   "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;",
@@ -77,6 +154,7 @@ const todayWithCustom = summarizeTodayCashflow(
   { ...todayCashflowSummary, asOf: derivedValues.todayCashflow.asOf },
 );
 assert.equal(isTodayTransaction("2026-10-31", todayCashflowSummary.date), false);
+assert.equal(localTimeHHMM(new Date("2026-11-01T13:07:00+07:00")), "13:07");
 assert.equal(
   todayWithCustom.entries.some((entry) => entry.id === "past"),
   false,
@@ -88,6 +166,25 @@ assert.equal(
 assert.equal(todayWithCustom.outflowDisplay, "−736.000 ₫");
 assert.equal(todayWithCustom.netDisplay, "+1.764.000 ₫");
 assert.equal(todayWithCustom.asOf, "2026-11-01T21:00:00+07:00");
+
+const todayWithPrincipal = summarizeTodayCashflow(
+  [
+    {
+      id: "principal-only",
+      date: todayCashflowSummary.date,
+      time: "13:00",
+      kind: "expense",
+      pnlImpact: false,
+      amount: "−1.000.000 ₫",
+    },
+  ],
+  todayCashflowSummary,
+);
+assert.equal(
+  todayWithPrincipal.outflowDisplay,
+  todayCashflowSummary.outflowDisplay,
+  "Debt principal must not be counted as today's spending",
+);
 
 let valuationState = recordManualValuation({}, "XYZ", 100n, "2026-11-01");
 valuationState = recordManualValuation(valuationState, "XYZ", 200n, "2026-11-02");
@@ -254,6 +351,29 @@ assert.equal(resolveView("unknown", "unknown"), "home");
 assert.equal(shouldOpenGlobalSearch(true), false);
 assert.equal(shouldOpenGlobalSearch(false), true);
 assert.equal(returnFocusId("quick-add", "mobile"), "mobile-quick-add");
+assert.equal(returnFocusId("quick-add", "home"), "home-quick-add");
+assert.deepEqual(
+  resolveNavigationTarget(
+    { txSub: "commitments", planSub: "sts", repSub: "pnlCashflow" },
+    { view: "transactions", txSub: "ledger" },
+  ),
+  { view: "transactions", txSub: "ledger", planSub: "sts", repSub: "pnlCashflow" },
+);
+assert.equal(
+  resolveNavigationTarget(
+    { txSub: "ledger", planSub: "sts", repSub: "pnlCashflow" },
+    { view: "plan", planSub: "forecast" },
+  ).planSub,
+  "forecast",
+);
+assert.equal(
+  resolveNavigationTarget(
+    { txSub: "ledger", planSub: "sts", repSub: "pnlCashflow" },
+    { view: "reports", reportSub: "netWorthBridge" },
+  ).repSub,
+  "netWorthBridge",
+);
+assert.equal(derivedValues.netWorth.state, "estimated");
 assert.equal(returnFocusId("explain", "cashflow"), "explain-cashflow");
 assert.equal(returnFocusId("commitment-add", "main"), "open-commitment-main");
 assert.equal(returnFocusId("investment-add", "main"), "open-investment-main");

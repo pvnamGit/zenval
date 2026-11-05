@@ -1,0 +1,6 @@
+# ADLC enforcement and trust roots require repository-owner review.
+/.github/CODEOWNERS @pvnamGit
+/.github/workflows/adlc-rails-guard.yml @pvnamGit
+/.adlc/config.json @pvnamGit
+/.adlc/tickets/.store.json @pvnamGit
+/.adlc/ticket-archive/.store.json @pvnamGit

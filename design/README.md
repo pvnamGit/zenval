@@ -26,13 +26,15 @@ preview only; stop it with `Ctrl+C` when finished.
 ## Information Architecture & Review Journeys (PRD §5.1)
 
 - **Home (`#home`)**:
-  - **First dashboard card**: **Today's total inflow & outflow (`Tổng thu / chi hôm nay`)**, net cash movement, today's transaction breakdown, and explicit exclusion of internal transfers (`2.000.000 ₫`) from P&L.
-  - Sub-sections matching PRD §5.1: `Hôm nay` (Today's P&L, Safe-to-spend, 30-day Cash flow, Due soon, To Review), `Bức tranh` (Net worth, Assets/ERV Receivables/Liabilities, Net-worth bridge), and `Kế hoạch` (Goals & Explainable Suggestion summary).
+  - A minimal awareness surface with **today's posted spending** as the hero metric, plus today's income, net movement, and explicit transfer exclusion.
+  - **Financial health** is a calm qualitative summary backed by three inspectable signals: safe-to-spend, 30-day projected cash low, and net-worth trend. It is not an opaque numeric score.
+  - Due-soon and To Review items are collapsed into one `Cần chú ý` list. Daily activity, commitments, goals, suggestions, and report breakdowns stay behind explicit links to their owning modules.
+  - Today's net movement remains visible as a quiet footer note and explicitly excludes internal transfers from income/expense.
 - **Inbox / To Review (`#review`)**:
   - Switch between `Cần xem lại (Review)`, `Chờ xác nhận (Pending)`, and `Đã ghi sổ (Posted)` for transfer candidates, duplicates, and commitment variances.
 - **Transactions (`#transactions`)**:
   - `Giao dịch (Ledger)`: Posted vs Pending vs Expected transactions with explicit non-P&L labels for transfers and loan principal.
-  - `Chi phí cố định, định kỳ & hóa đơn (Fixed commitments & recurring)`: Full monthly baseline (`Tổng thu cố định dự kiến`, `Tổng cam kết chi & nghĩa vụ`, `Đã thanh toán`, `Còn phải giữ trước`), filterable by fixed inflows, fixed expenses/loans, and savings transfers, plus the **`+ Tạo khoản cố định hàng tháng` modal** to create new monthly fixed inflows/outflows/loan installments/savings transfers in-session.
+  - `Chi phí cố định, định kỳ & hóa đơn (Fixed commitments & recurring)`: Full monthly baseline (`Tổng thu cố định dự kiến`, `Tổng cam kết chi & nghĩa vụ`, `Đã thanh toán`, `Còn phải giữ trước`), filterable by fixed inflows, fixed expenses/loans, and savings transfers, plus the **`Tạo khoản cố định hàng tháng` modal** to create new monthly fixed inflows/outflows/loan installments/savings transfers in-session.
   - `Lịch sử nhập (Import history)`: CSV/XLSX import runs, column mapping, duplicate detection, and rollback window.
 - **Accounts (`#accounts`)**:
   - `Tiền mặt / Ngân hàng / Ví (Cash / bank / e-wallet)` including deduplicated TCBS brokerage cash.
@@ -42,13 +44,13 @@ preview only; stop it with `Ctrl+C` when finished.
   - `Danh mục & Tài sản (Portfolios / holdings)`: Equities (`FPT`), Mutual Funds (`DCDS`), Physical Gold (`GOLD-9999` manual valuation), and Brokerage Cash (double-count protected).
   - `Nhật ký giao dịch & Quyền (Activity / corporate actions)`: Buy, dividend, stock dividend (20:3 corporate action), and manual valuation snapshots.
   - `Hiệu suất & Phân bổ (Performance / allocation)`: Performance Attribution Bridge (FR-053), XIRR, and asset allocation.
-  - **`+ Ghi nhật ký đầu tư / Thêm mã` modal**: Log Buy, Sell, Dividend, or Manual Valuation directly in-session.
+  - **`Ghi nhật ký đầu tư / Thêm mã` modal**: choose an instrument from a provider-catalog dropdown, then log Buy, Sell, Dividend, or Manual Valuation directly in-session. Real provider calls remain out of scope.
 - **Debts & Receivables (`#debts`)**:
   - `Khoản phải trả (Payables)`: Auto loan & credit card with Principal (Non-P&L) vs Interest/Fee (P&L) splits.
   - `Khoản phải thu (Receivables)`: Gross principal vs Estimated Recoverable Value (`ERV = Principal × Recovery probability`).
   - `Lộ trình & Mô phỏng (Timeline / simulation)`: Interactive extra-principal payoff simulator (`+0 ₫`, `+1tr ₫`, `+2tr ₫/tháng`) with `Apply to plan (Draft)`.
 - **Plan (`#plan`)**:
-  - `Safe-to-spend / spending plan`, `Goals` (with overlap protection), `Forecast` (Conservative / Base / Optimistic scenarios), and `Suggestions` (Eligibility gate + Detection → Reason → Action → Impact + Draft apply).
+  - `Safe-to-spend / spending plan` with editable spending/saving/investing ratios; user-created `Goals` linked to accounts, holdings, tagged transactions, or plan contributions; `Forecast` (Conservative / Base / Optimistic scenarios); and `Suggestions` (Eligibility gate + Detection → Reason → Action → Impact + Draft apply).
 - **Reports (`#reports`)**:
   - `Thu/Chi & Dòng tiền (P&L)` (excluding transfers & principal), `Tài sản ròng & Cầu nối (Net-Worth Bridge)`, and `Đóng sổ tháng (5-step Monthly Close checklist)`.
 - **Settings (`#settings`)**:
