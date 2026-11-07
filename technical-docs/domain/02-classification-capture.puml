@@ -1,0 +1,101 @@
+@startuml
+title Zenval — Classification và Capture
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package "Classification & Capture" {
+  class Category <<entity>> {
+    id: CategoryId
+    workspaceId: WorkspaceId
+    stableCode: string
+    localizedLabel: string
+    parentId: CategoryId [0..1]
+  }
+  class Tag <<entity>> {
+    workspaceId: WorkspaceId
+  }
+  class Counterparty <<entity>> {
+    workspaceId: WorkspaceId
+    alias: string
+    kind: merchant / person / institution
+  }
+  class CategorizationRule <<aggregate>> {
+    workspaceId: WorkspaceId
+    conditions: RulePredicate[]
+    categoryId: CategoryId
+    version: integer
+  }
+  class ImportJob <<aggregate>> {
+    id: ImportJobId
+    workspaceId: WorkspaceId
+    sourceHash: string
+    mappingVersion: string
+    status: ImportStatus
+    checkpoint: string [0..1]
+  }
+  class ImportRow <<entity>> {
+    workspaceId: WorkspaceId
+    rowNumber: integer
+    sourceExternalId: string [0..1]
+    validationErrors: string[]
+    committedEventId: BusinessEventId [0..1]
+  }
+  class Attachment <<entity>> {
+    workspaceId: WorkspaceId
+    objectKey: string
+    contentHash: string
+  }
+  class OCRResult <<draft>> {
+    workspaceId: WorkspaceId
+    confidence: Confidence
+    extractedFields: DraftFields
+  }
+  class ReviewItem <<aggregate>> {
+    id: ReviewItemId
+    workspaceId: WorkspaceId
+    reason: ReviewReason
+    confidence: Confidence
+    source: SourceRef
+    state: ReviewState
+    resultEventId: BusinessEventId [0..1]
+  }
+  class DuplicateCandidate <<entity>> {
+    workspaceId: WorkspaceId
+    leftSource: SourceRef
+    rightSource: SourceRef
+    decision: DuplicateDecision
+  }
+  class TransactionRef <<external reference>> {
+    workspaceId: WorkspaceId
+    transactionId: TransactionId
+  }
+  ImportJob "1" *-- "0..*" ImportRow
+  Attachment "1" -- "0..*" OCRResult
+  ReviewItem --> ImportRow : optional source
+  ReviewItem --> OCRResult : optional source
+  ReviewItem --> DuplicateCandidate : optional source
+  ReviewItem --> TransactionRef : optional source
+  TransactionRef "0..*" -- "0..*" Tag : tag links
+  TransactionRef --> Category : categoryId
+  TransactionRef --> Counterparty : counterpartyId
+  CategorizationRule --> Category
+}
+note bottom of ReviewItem
+  Approve/commit delegates posting to Ledger application port.
+  Keep provenance source -> import/review -> business event.
+  Duplicate detection proposes; it never silently deletes facts.
+  OCR is an unconfirmed draft until user review.
+end note
+note bottom of Category
+  Category changes must not implicitly change transaction type.
+  Seed/default catalog is distinct from workspace-owned categories.
+  No cross-context ORM object references: IDs/contracts only.
+end note
+legend bottom
+  Attributes describe trusted in-memory domain values, NOT plaintext DB columns.
+  All private financial persistence uses FinancialCryptoGateway encrypted envelopes.
+  See financial-data-encryption.md; implementation/migration is still pending.
+endlegend
+@enduml

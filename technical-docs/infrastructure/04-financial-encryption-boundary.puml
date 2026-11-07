@@ -1,0 +1,75 @@
+@startuml
+allowmixing
+title Zenval — Financial encryption boundary
+caption REQUIRED TARGET — chưa triển khai; current schema vẫn có plaintext
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype polyline
+left to right direction
+package "Trusted application / domain (memory only)" {
+  class AuthorizedUseCase {
+    actor: ActorContext
+    purpose: AccessPurpose
+  }
+  class FinancialAggregate {
+    amount: ExactMoney
+    businessType: FinancialType
+    privateFields: DomainValues
+  }
+  interface FinancialRepositoryPort
+  interface FinancialResponsePolicyPort
+  AuthorizedUseCase ..> FinancialRepositoryPort
+  AuthorizedUseCase --> FinancialAggregate : validate / calculate
+}
+package "Server infrastructure" {
+  class EncryptedFinancialRepository
+  class FinancialCryptoGateway <<sole crypto implementation>> {
+    +encrypt(authorizedScope, record, payload): Envelope
+    +decrypt(authorizedScope, record, envelope): DomainPayload
+  }
+  class FinancialResponsePolicy {
+    +project(actor, purpose, values): AllowedDto
+  }
+  class KmsKeyAdapter
+  EncryptedFinancialRepository ..|> FinancialRepositoryPort
+  EncryptedFinancialRepository --> FinancialCryptoGateway
+  FinancialCryptoGateway --> KmsKeyAdapter : wrap / unwrap DEK
+  FinancialResponsePolicy ..|> FinancialResponsePolicyPort
+  FinancialResponsePolicy ..> FinancialAggregate : allowed fields only
+}
+cloud "Managed KMS\nKEK stays outside DB" as KMS
+KmsKeyAdapter --> KMS
+entity "Generic encrypted financial record" as Row {
+  record_id: random UUID
+  workspace_id: UUID
+  version: integer
+  technical_timestamps: timestamptz
+  --
+  ciphertext: bytea
+  nonce: bytea
+  auth_tag: bytea
+  wrapped_dek: bytea
+  kek_key_ref: opaque reference
+  crypto_version: integer
+  payload_schema_version: integer
+}
+EncryptedFinancialRepository --> Row : ciphertext only
+AuthorizedUseCase ..> FinancialResponsePolicyPort : authorized result
+rectangle "HTTPS DTO / UI\nUI formats amounts; never receives keys" as UI
+FinancialResponsePolicy --> UI
+note bottom of FinancialCryptoGateway
+  AEAD proposal: AES-256-GCM; fresh DEK per payload write.
+  Canonical AAD binds workspace, row, purpose and versions.
+  Authorization and tenant/resource checks before decrypt/unwrap.
+  Same module for API, jobs, exports, attachments and projections.
+  Fail closed; never plaintext/zero fallback or raw logs.
+end note
+note bottom of Row
+  No raw amounts, currency, direction, categories, asset/debt fields.
+  Business subtype, financial dates/status and lineage are encrypted.
+  Table/routing names must not reveal income/expense/debt subtype.
+  Only reviewed technical metadata is clear; access patterns still leak.
+  SQL cannot SUM/filter financial ciphertext: compute in trusted memory.
+  Current two ledger tables do NOT yet satisfy this target.
+end note
+@enduml

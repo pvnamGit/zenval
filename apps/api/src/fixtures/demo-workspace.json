@@ -1,0 +1,219 @@
+{
+  "dashboard": {
+    "mode": "demo",
+    "workspaceId": "demo-workspace",
+    "asOf": "2026-11-05T01:30:00.000Z",
+    "safeToSpend": {
+      "amount": { "value": { "amount": "12400000", "currency": "VND" }, "display": "12.400.000 ₫" },
+      "horizon": "Đến kỳ thu nhập tiếp theo · 14 ngày",
+      "sourceSummary": "Tiền khả dụng, thu nhập dự kiến và cam kết mẫu",
+      "calculationVersion": "Demo presentation v1"
+    },
+    "cashFlow": {
+      "projectedLow": {
+        "value": { "amount": "8200000", "currency": "VND" },
+        "display": "8.200.000 ₫"
+      },
+      "confidence": "medium",
+      "scenario": "base"
+    },
+    "dueSoon": [
+      {
+        "id": "rent",
+        "dueOn": "2026-11-05",
+        "kind": "expense",
+        "title": "Tiền thuê nhà",
+        "amount": { "value": { "amount": "8000000", "currency": "VND" }, "display": "8.000.000 ₫" },
+        "detail": "4 ngày nữa"
+      },
+      {
+        "id": "internet",
+        "dueOn": "2026-11-08",
+        "kind": "expense",
+        "title": "Internet",
+        "amount": { "value": { "amount": "250000", "currency": "VND" }, "display": "250.000 ₫" },
+        "detail": "7 ngày nữa"
+      },
+      {
+        "id": "loan-payment",
+        "dueOn": "2026-11-12",
+        "kind": "debt-installment",
+        "title": "Khoản vay ngân hàng",
+        "amount": { "value": { "amount": "3500000", "currency": "VND" }, "display": "3.500.000 ₫" },
+        "detail": "Gốc 2,8tr · Lãi 700k"
+      }
+    ],
+    "reviewCount": 3,
+    "netWorth": {
+      "amount": {
+        "value": { "amount": "284600000", "currency": "VND" },
+        "display": "284.600.000 ₫"
+      },
+      "assets": { "value": { "amount": "318100000", "currency": "VND" }, "display": "318,1tr ₫" },
+      "liabilities": {
+        "value": { "amount": "33500000", "currency": "VND" },
+        "display": "33,5tr ₫"
+      },
+      "monthChangeLabel": "+2,4% tháng này"
+    }
+  },
+  "finance": {
+    "mode": "demo",
+    "workspaceId": "demo-workspace",
+    "asOf": "2026-11-05T01:30:00.000Z",
+    "source": "mock-json",
+    "totalAssets": {
+      "value": { "amount": "210100000", "currency": "VND" },
+      "display": "210.100.000 ₫"
+    },
+    "accounts": [
+      {
+        "id": "account-vcb",
+        "workspaceId": "demo-workspace",
+        "name": "Tài khoản thanh toán",
+        "institution": "Vietcombank",
+        "maskedReference": "•• 2486",
+        "kind": "bank",
+        "balance": {
+          "value": { "amount": "26480000", "currency": "VND" },
+          "display": "26.480.000 ₫"
+        },
+        "reconciliation": "reconciled",
+        "asOf": "2026-11-05T01:30:00.000Z",
+        "icon": "VC"
+      },
+      {
+        "id": "account-tcb-savings",
+        "workspaceId": "demo-workspace",
+        "name": "Tiết kiệm 6 tháng",
+        "institution": "Techcombank",
+        "maskedReference": "6 months",
+        "kind": "savings",
+        "balance": {
+          "value": { "amount": "180000000", "currency": "VND" },
+          "display": "180.000.000 ₫"
+        },
+        "reconciliation": "reconciled",
+        "asOf": "2026-11-05T01:30:00.000Z",
+        "icon": "TC"
+      },
+      {
+        "id": "account-momo",
+        "workspaceId": "demo-workspace",
+        "name": "Ví điện tử",
+        "institution": "MoMo",
+        "maskedReference": "•• 0901",
+        "kind": "wallet",
+        "balance": {
+          "value": { "amount": "3620000", "currency": "VND" },
+          "display": "3.620.000 ₫"
+        },
+        "reconciliation": "manual",
+        "asOf": "2026-11-04T01:30:00.000Z",
+        "icon": "MO"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "transaction-groceries",
+        "workspaceId": "demo-workspace",
+        "occurredAt": "2026-11-05T02:42:00.000Z",
+        "kind": "expense",
+        "status": "posted",
+        "title": "WinMart",
+        "category": "Ăn uống",
+        "amount": { "value": { "amount": "486000", "currency": "VND" }, "display": "−486.000 ₫" },
+        "pnlImpact": true,
+        "sourceAccountId": "account-vcb",
+        "destinationAccountId": null,
+        "note": "",
+        "source": "mock-json"
+      },
+      {
+        "id": "transaction-rent-expected",
+        "workspaceId": "demo-workspace",
+        "occurredAt": "2026-11-05T00:00:00.000Z",
+        "kind": "expense",
+        "status": "expected",
+        "title": "Tiền thuê nhà",
+        "category": "Nhà ở",
+        "amount": {
+          "value": { "amount": "8000000", "currency": "VND" },
+          "display": "−8.000.000 ₫"
+        },
+        "pnlImpact": false,
+        "sourceAccountId": "account-vcb",
+        "destinationAccountId": null,
+        "note": "Expected occurrence; not a posted ledger fact",
+        "source": "mock-json"
+      },
+      {
+        "id": "transaction-transfer",
+        "workspaceId": "demo-workspace",
+        "occurredAt": "2026-11-04T03:15:00.000Z",
+        "kind": "transfer",
+        "status": "posted",
+        "title": "MOMO → VCB",
+        "category": null,
+        "amount": { "value": { "amount": "2000000", "currency": "VND" }, "display": "2.000.000 ₫" },
+        "pnlImpact": false,
+        "sourceAccountId": "account-momo",
+        "destinationAccountId": "account-vcb",
+        "note": "",
+        "source": "mock-json"
+      }
+    ],
+    "reviewItems": [
+      {
+        "id": "transfer-candidate",
+        "workspaceId": "demo-workspace",
+        "bucket": "review",
+        "kind": "transfer",
+        "title": "MOMO → VCB",
+        "amount": { "value": { "amount": "2000000", "currency": "VND" }, "display": "2.000.000 ₫" },
+        "detail": "Ứng viên chuyển khoản · Không ảnh hưởng thu/chi",
+        "pnlImpact": false
+      },
+      {
+        "id": "duplicate-candidate",
+        "workspaceId": "demo-workspace",
+        "bucket": "review",
+        "kind": "duplicate",
+        "title": "WinMart",
+        "amount": { "value": { "amount": "486000", "currency": "VND" }, "display": "486.000 ₫" },
+        "detail": "Có thể trùng với giao dịch đã ghi sổ",
+        "pnlImpact": null
+      },
+      {
+        "id": "commitment-variance",
+        "workspaceId": "demo-workspace",
+        "bucket": "review",
+        "kind": "variance",
+        "title": "Khoản vay ngân hàng",
+        "amount": { "value": { "amount": "3620000", "currency": "VND" }, "display": "3.620.000 ₫" },
+        "detail": "Số tiền lệch khỏi kỳ trả dự kiến",
+        "pnlImpact": null
+      },
+      {
+        "id": "expected-rent",
+        "workspaceId": "demo-workspace",
+        "bucket": "pending",
+        "kind": "expected",
+        "title": "Tiền thuê nhà",
+        "amount": { "value": { "amount": "8000000", "currency": "VND" }, "display": "8.000.000 ₫" },
+        "detail": "Dự kiến; chưa phải ledger fact",
+        "pnlImpact": null
+      },
+      {
+        "id": "posted-groceries",
+        "workspaceId": "demo-workspace",
+        "bucket": "posted",
+        "kind": "expense",
+        "title": "WinMart",
+        "amount": { "value": { "amount": "486000", "currency": "VND" }, "display": "486.000 ₫" },
+        "detail": "Đã ghi sổ trong dữ liệu mẫu",
+        "pnlImpact": true
+      }
+    ]
+  }
+}

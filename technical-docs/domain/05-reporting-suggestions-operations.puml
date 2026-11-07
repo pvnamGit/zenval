@@ -1,0 +1,160 @@
+@startuml
+title Zenval — Reporting, Suggestions, Notifications và Audit
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package Reporting {
+  class ReportRun <<aggregate / derived>> {
+    id: ReportRunId
+    workspaceId: WorkspaceId
+    reportType: ReportType
+    period: Period
+    inputSnapshotIds: SourceRef[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  class MetricSnapshot <<projection>> {
+    id: MetricSnapshotId
+    workspaceId: WorkspaceId
+    value: MoneyOrMetric
+    sourceIds: SourceRef[]
+    asOf: Instant
+    freshness: Freshness
+    calculationVersion: string
+  }
+  class PeriodClose <<aggregate>> {
+    workspaceId: WorkspaceId
+    period: Period
+    state: open / closing / closed / reopened
+    reopenReason: string [0..1]
+  }
+  class SnapshotVersion <<immutable entity>> {
+    workspaceId: WorkspaceId
+    version: integer
+    inputSnapshotIds: SourceRef[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  class CalculationRun <<lineage record>> {
+    workspaceId: WorkspaceId
+    sourceIds: SourceRef[]
+    assumptions: Assumption[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  ReportRun "1" -- "0..*" MetricSnapshot
+  PeriodClose "1" *-- "0..*" SnapshotVersion
+  ReportRun --> CalculationRun
+  SnapshotVersion --> CalculationRun
+}
+package Suggestions {
+  class Suggestion <<aggregate / derived>> {
+    id: SuggestionId
+    workspaceId: WorkspaceId
+    class: SuggestionClass
+    status: SuggestionStatus
+    finding: string
+    reason: string
+    impactRange: EstimatedRange
+    horizon: Period
+    assumptions: Assumption[]
+    confidence: Confidence
+    asOf: Instant
+    expiresAt: Instant
+    calculationVersion: string
+  }
+  class SuggestionEvidence <<immutable entity>> {
+    workspaceId: WorkspaceId
+    inputSnapshotId: SourceRef
+    observedAt: Instant
+    confidenceFactors: string[]
+  }
+  class SuggestionAction <<entity / draft>> {
+    workspaceId: WorkspaceId
+    planDraftId: PlanId [0..1]
+    proposedDiff: PlanDiff
+    confirmedAt: Instant [0..1]
+  }
+  class Feedback <<entity>> {
+    workspaceId: WorkspaceId
+    kind: helpful / not-relevant / incorrect / remind-later
+    recordedAt: Instant
+  }
+  Suggestion "1" *-- "1..*" SuggestionEvidence
+  Suggestion "1" *-- "0..*" SuggestionAction
+  Suggestion "1" *-- "0..*" Feedback
+  SuggestionEvidence ..> MetricSnapshot : immutable input reference
+}
+package Notifications {
+  class Notification <<aggregate>> {
+    id: NotificationId
+    workspaceId: WorkspaceId
+    type: NotificationType
+    sourceEventId: EventId
+    state: NotificationState
+    scheduledAt: Instant
+  }
+  class NotificationPreference <<entity>> {
+    workspaceId: WorkspaceId
+    userId: UserId
+    channels: Channel[]
+    quietHours: LocalTimeRange
+    timezone: IanaTimezone
+    allowSensitivePreview: boolean
+  }
+  class DeliveryAttempt <<entity>> {
+    workspaceId: WorkspaceId
+    channel: Channel
+    attempt: integer
+    status: DeliveryStatus
+    attemptedAt: Instant
+  }
+  Notification "1" *-- "0..*" DeliveryAttempt
+  Notification ..> NotificationPreference : delivery policy
+}
+package "Audit & Compliance" {
+  class AuditEvent <<immutable aggregate>> {
+    workspaceId: WorkspaceId
+    actorId: UserId
+    action: AuditAction
+    targetRef: SourceRef
+    recordedAt: Instant
+    correlationId: string
+  }
+  class DataRequest <<aggregate>> {
+    id: DataRequestId
+    workspaceId: WorkspaceId
+    userId: UserId
+    type: export / delete
+    status: DataRequestStatus
+    cutoffAt: Instant
+    schemaVersion: string
+    checkpoint: string [0..1]
+    retentionPolicy: string
+  }
+  DataRequest "1" -- "0..*" AuditEvent : orchestration audit
+}
+note bottom of SuggestionAction
+  Apply only creates a plan draft/diff after user confirmation.
+  No payment, transfer, order or posting capability.
+  Eligibility, stale-input invalidation, TTL and class kill switches apply.
+end note
+note bottom of PeriodClose
+  Reopen creates a new snapshot version and retains old versions.
+  Reporting/Suggestions never mutate source financial aggregates.
+  MetricSnapshot ownership in Reporting is a proposed read-contract boundary.
+  CalculationRun is logical lineage, not a shared writable domain aggregate.
+end note
+note bottom of AuditEvent
+  Minimize sensitive payload. No raw finance data in logs/evidence.
+  Export/delete orchestrates explicit context ports with authorization,
+  cutoff/checkpoint and retention; no cross-context direct table deletes.
+end note
+legend bottom
+  Attributes describe trusted in-memory domain values, NOT plaintext DB columns.
+  All private financial persistence uses FinancialCryptoGateway encrypted envelopes.
+  See financial-data-encryption.md; implementation/migration is still pending.
+endlegend
+@enduml

@@ -1,0 +1,58 @@
+@startuml
+title Zenval — Atomic obligation payment
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+autonumber
+actor User
+participant "HTTP controller" as HTTP
+participant "RecordObligationPaymentHandler" as H
+participant "AuthorizationPort" as AUTH
+participant "UnitOfWork" as UOW
+participant "IdempotencyStore" as IDEM
+participant "ObligationRepository" as R
+participant "Obligation aggregate" as O
+participant "LedgerPostingPort / Ledger application" as L
+participant "OutboxPort" as OUT
+participant "PostgreSQL" as DB
+User -> HTTP : Record an actual payment + idempotency key
+HTTP -> H : validated command + authenticated ActorContext
+H -> AUTH : assertAllowed(actor, workspace, obligation)
+AUTH --> H : allowed or reject before mutation
+H -> UOW : execute(workspaceId)
+UOW -> DB : BEGIN
+H -> IDEM : claimOrReplay(actor/scope/key, requestHash, tx)
+IDEM -> DB : workspace-scoped unique claim
+alt same request already committed
+  IDEM --> H : stored response
+  H -> UOW : finish replay without new writes
+  UOW -> DB : COMMIT
+else new request
+  H -> R : find(workspaceId, obligationId, tx)
+  R --> H : aggregate + expectedVersion
+  H -> O : allocate principal/interest/fee/tax by approved policy
+  O --> H : allocation + updated state
+  H -> L : post balanced event(command, same tx)
+  L -> DB : persist Ledger facts after domain validation
+  L --> H : businessEventId
+  H -> R : save(updated obligation, expectedVersion, eventId, tx)
+  R -> DB : optimistic concurrency update
+  H -> OUT : append minimal versioned events(tx)
+  OUT -> DB : INSERT outbox_event
+  H -> IDEM : save response(tx)
+  IDEM -> DB : persist idempotency result
+  H -> UOW : complete
+  UOW -> DB : COMMIT
+end
+H --> HTTP : committed result or replay
+HTTP --> User : response
+note over H,DB
+  Any failure/conflicting key/version: ROLLBACK, no partial facts or outbox.
+  Ledger application alone writes posted facts, including within this transaction.
+  Principal is not expense; fees/interest follow direction/policy.
+  This records a payment fact; it never initiates a bank payment.
+  Handler names and transaction APIs are proposed contracts.
+end note
+@enduml

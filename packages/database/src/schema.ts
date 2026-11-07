@@ -1,4 +1,13 @@
-import { index, numeric, pgSchema, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  foreignKey,
+  index,
+  numeric,
+  pgSchema,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const ledgerSchema = pgSchema("ledger");
 
@@ -11,7 +20,10 @@ export const businessEvents = ledgerSchema.table(
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
     postedAt: timestamp("posted_at", { withTimezone: true }).notNull(),
   },
-  (table) => [index("business_event_workspace_posted_idx").on(table.workspaceId, table.postedAt)],
+  (table) => [
+    index("business_event_workspace_posted_idx").on(table.workspaceId, table.postedAt),
+    unique("business_event_id_workspace_unique").on(table.id, table.workspaceId),
+  ],
 );
 
 export const ledgerEntries = ledgerSchema.table(
@@ -28,5 +40,10 @@ export const ledgerEntries = ledgerSchema.table(
   },
   (table) => [
     index("ledger_entry_workspace_event_idx").on(table.workspaceId, table.businessEventId),
+    foreignKey({
+      name: "ledger_entry_event_workspace_fk",
+      columns: [table.businessEventId, table.workspaceId],
+      foreignColumns: [businessEvents.id, businessEvents.workspaceId],
+    }),
   ],
 );

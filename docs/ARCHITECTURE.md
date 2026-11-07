@@ -330,7 +330,7 @@ Toàn bộ obligation update và ledger posting phải nằm trong một databas
 
 ### 7.1 PostgreSQL as system of record
 
-- Một PostgreSQL cluster, logical schemas theo context: `iam`, `ledger`, `capture`, `planning`, `obligation`, `investment`, `market`, `reporting`, `audit`.
+- Các tên schema sau là ownership logic, không cho phép lộ financial subtype ở physical row routing; thiết kế physical encrypted storage theo §15.3. Một PostgreSQL cluster, logical schemas theo context: `iam`, `ledger`, `capture`, `planning`, `obligation`, `investment`, `market`, `reporting`, `audit`.
 - Migrations theo forward-only, review SQL diff, expand/contract cho zero/low downtime.
 - Mọi business table có `id`, `workspace_id`, `created_at`, `updated_at`, `version`; facts immutable có `recorded_at`.
 - Foreign key và check constraint cho invariants có thể biểu diễn ở DB.
@@ -338,15 +338,21 @@ Toàn bộ obligation update và ledger posting phải nằm trong một databas
 
 ### 7.2 Money, quantity và time
 
-- Fiat amount: `numeric(20, 4)` hoặc integer minor-unit kết hợp currency metadata. Quyết định cuối phải nhất quán toàn hệ thống; đề xuất `numeric` trong DB + `Decimal` object trong Node vì FX/fee có sub-minor calculations.
+**Storage override (user requirement 07/11/2026):** Các numeric types bên dưới mô tả
+logical exact precision khi xử lý trong memory, không cho phép lưu raw financial
+columns ở target DB. Private payload được mã hóa trước persistence qua infrastructure
+gateway (§15.3). Current ledger schema còn plaintext và cần migration riêng.
+
+- Fiat amount: exact Decimal trong Node và decimal string trong encrypted payload; logical precision policy (ví dụ 20,4 hoặc minor-unit) phải nhất quán. Không lưu raw numeric financial columns trong target DB.
 - Không convert `numeric` sang JavaScript `number`; dùng `decimal.js` hoặc string boundary.
-- Crypto/asset quantity: `numeric(38, 18)`; rate: precision riêng và validated bounds.
+- Crypto/asset quantity: logical precision tương đương `numeric(38,18)` trong encrypted payload; rate có precision riêng và validated bounds.
 - Timestamp lưu `timestamptz` UTC; business due date dùng `date` + user timezone/policy.
 - Original currency/amount bất biến; converted amount luôn link `fx_rate_id` và calculation version.
 
 ### 7.3 Ledger model
 
 ```text
+Logical decrypted representation (not plaintext DDL):
 business_event
   1 ─── N ledger_entry
 
@@ -360,15 +366,15 @@ ledger_entry:
 
 Invariants enforced ở domain + DB/procedural check nơi phù hợp:
 
-- Posted event phải balanced theo base representation trong rounding tolerance.
+- Posted event phải balanced theo base representation trong rounding tolerance. Với encrypted storage, kiểm tra nội dung ở trusted domain/application; DB không thể CHECK balance trực tiếp trên ciphertext.
 - Event status transition hợp lệ; correction bằng reversal/new event, không sửa lịch sử âm thầm.
-- Unique `(workspace_id, source_type, source_external_id)` khi source ID tồn tại.
+- Logical uniqueness theo workspace/source khi source ID tồn tại: không lưu raw `source_type`/source ID. Enforce trong transaction bằng tenant/purpose-scoped keyed opaque fingerprint với version và index đã review threat model; source details nằm trong ciphertext, migration/rotation phải giữ dedup semantics.
 - Unique idempotency result theo actor/scope/key.
 
 ### 7.4 CQRS nhẹ, không tách database
 
 - Command path dùng aggregates và normalized write model.
-- Query path dùng SQL views/materialized tables: account balances, commitment month status, holding snapshot, net-worth daily, report facts.
+- Query path dùng encrypted projections/snapshots: account balances, commitment month status, holding snapshot, net-worth daily, report facts. SQL chỉ chọn theo allowlisted technical metadata; decrypt/filter/aggregate financial contents trong trusted runtime. Không tạo plaintext views/materialized tables hoặc SQL SUM trên encrypted amounts. Query strategy cần benchmark riêng.
 - Không dùng event sourcing toàn hệ thống. Ledger/business events là facts, nhưng user/profile/config aggregates giữ current state + audit.
 - Projection cập nhật synchronous khi cần read-after-write critical; các report nặng cập nhật async và hiển thị `as_of`.
 
@@ -377,8 +383,8 @@ Invariants enforced ở domain + DB/procedural check nơi phù hợp:
 - `outbox_event` được insert cùng transaction với aggregate change.
 - Worker claim bằng `FOR UPDATE SKIP LOCKED`, publish/process và đánh dấu result.
 - Consumer có `inbox_consumption` unique theo `event_id + handler_name`.
-- Event envelope: `event_id`, `event_type`, `schema_version`, `occurred_at`, `workspace_id`, `aggregate_id`, `correlation_id`, `causation_id`, payload tối thiểu.
-- Payload không chứa note/counterparty/raw amount nếu consumer không cần.
+- Logical event envelope: `event_id`, `event_type`, `schema_version`, `occurred_at`, `workspace_id`, `aggregate_id`, `correlation_id`, `causation_id`, payload tối thiểu. Financial type/time/payload được mã hóa trước persistence; chỉ generic routing và allowlisted technical metadata nằm ngoài envelope.
+- Payload được tối thiểu hóa theo consumer, luôn mã hóa nếu chứa financial content; không có plaintext copies ở outbox/inbox/job/log.
 
 ### 7.6 Backup và retention
 
@@ -792,7 +798,9 @@ flowchart LR
 ### 15.3 Data protection
 
 - TLS in transit; provider-managed encryption at rest.
-- Field-level envelope encryption cho đặc biệt nhạy cảm nếu threat model yêu cầu: account identifiers, provider tokens, documents.
+- Bắt buộc application-level envelope encryption trước DB cho toàn bộ nội dung tài chính riêng của user: amounts/currency, income/expense/direction, categories, transactions, accounts/assets, obligations, investments và derived reports/forecast/suggestions. Provider-managed at-rest encryption vẫn áp dụng bổ sung.
+- Một module server-only `FinancialCryptoGateway` trong infrastructure sở hữu mọi encrypt/decrypt; API/worker/repositories dùng cùng boundary. Keys ở managed KMS ngoài DB; plaintext chỉ trong trusted runtime memory sau authorization và ở output đã được cho phép. Domain tính bằng exact Money; presentation định dạng tiền.
+- Projections, outbox/job/idempotency payloads, attachments/exports và persistent caches không lưu bản raw. Plaintext metadata dùng allowlist; business subtype không lộ qua table/routing/index. Xem [financial encryption contract](../technical-docs/financial-data-encryption.md) và [boundary PUML](../technical-docs/infrastructure/04-financial-encryption-boundary.puml).
 - KMS/Secret Manager production; key rotation/version; không log decrypted values.
 - Signed URL TTL ngắn, single-purpose; attachments private.
 - Analytics không nhận raw amount, note, account number hoặc counterparty.

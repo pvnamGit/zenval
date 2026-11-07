@@ -25,6 +25,15 @@ exit status, and concise failure output.
 Apply extra checks by risk:
 
 - Financial behavior: invoke `$zenval-financial-correctness` and inspect golden cases.
+- Financial data paths, even without formula changes: read the
+  [financial encryption contract](../../../technical-docs/financial-data-encryption.md).
+  Trace input through every affected database/side-store write and authorized output. Require
+  ciphertext-only financial storage, the common infrastructure crypto gateway, keys outside DB,
+  tenant/resource/purpose authorization before decrypt, and no raw logs/projections/caches.
+  Check exact round-trip, tamper/key failure, atomicity/retry and disclosure evidence; include
+  rotation/restore when affected. Return `REVISE` for raw financial persistence, a bypass decrypt
+  path, plaintext fallback or missing acceptance evidence. Existing raw schema is not an exception;
+  distinguish documented design from implemented and tested protection.
 - Contract/schema/migration: check backward compatibility, idempotency, rollback/recovery, and data
   lineage.
 - Security/privacy: check authorization at the use case, tenant isolation, secret/PII leakage, and

@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "biome lint .",
+    "migrate": "node --env-file-if-exists=../../.env dist/migrate.js",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },

@@ -623,6 +623,7 @@ Priority: **M** Must, **S** Should, **C** Could. Phase ghi `P1/P2/P3`.
 - NFR-SEC-06: Rate limit, session revocation, device/session list, anomaly alert; audit admin access.
 - NFR-SEC-07: Không thu thập bank password; future integrations dùng redirect/OAuth hoặc read-only token, scope tối thiểu.
 - NFR-SEC-08: Incident response có severity, on-call, containment, notification workflow và postmortem.
+- NFR-SEC-09 (user requirement 07/11/2026): Mọi nội dung tài chính riêng của user phải được mã hóa trước khi ghi database/side stores: amount, income/expense/direction, phân loại, transactions, assets, debt/receivables và kết quả suy diễn. Một infrastructure crypto boundary dùng chung quản lý encrypt/decrypt với keys ngoài DB; chỉ giải mã trong trusted memory sau kiểm tra quyền và chỉ công bố output được phép. Không lưu raw copies trong projections, jobs/outbox, cache, files hoặc logs. Chi tiết tại [financial encryption contract](../technical-docs/financial-data-encryption.md).
 
 ### 9.2 Privacy và data governance
 

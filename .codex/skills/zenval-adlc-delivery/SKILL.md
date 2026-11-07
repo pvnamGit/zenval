@@ -18,6 +18,17 @@ scope, decisions, or evidence.
   plan from `docs/exec-plans/TEMPLATE.md`.
 - Explore before editing. Cite existing code, tests, and boundaries in the impact map.
 
+For any financial data path (including repositories, schema, projections, jobs, imports,
+exports or caches), invoke `$zenval-financial-correctness` and read the repository
+[financial encryption contract](../../../technical-docs/financial-data-encryption.md)
+before implementation. Treat encrypt-before-persistence as a mandatory acceptance criterion:
+private amounts, income/expense direction, categories, transactions, assets and debt must
+never be persisted raw. Use the single server infrastructure `FinancialCryptoGateway`;
+authorize before decrypting and keep keys outside the database. Inventory side stores and
+require executable leakage and financial round-trip checks for the affected paths.
+Existing plaintext foundation tables are a compliance gap, not a pattern to copy; do not
+enable real-user financial writes until the affected slice meets the contract.
+
 If intent is materially ambiguous, a rail conflicts with the requested result, or a destructive or
 external side effect lacks authorization, stop with a specific human decision request.
 

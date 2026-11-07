@@ -1,0 +1,326 @@
+{
+  "common": {
+    "appName": "Zenval",
+    "tagline": "Số liệu điềm tĩnh. Quyết định rõ ràng.",
+    "retry": "Thử lại",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "save": "Lưu",
+    "viewAll": "Xem tất cả",
+    "comingSoon": "Sắp có",
+    "loading": "Đang tải…",
+    "all": "Tất cả",
+    "noPnl": "Không tính thu/chi",
+    "explain": "Giải thích con số",
+    "back": "Quay lại"
+  },
+  "nav": {
+    "home": "Tổng quan",
+    "transactions": "Giao dịch",
+    "accounts": "Tài khoản",
+    "review": "Cần xem lại",
+    "plan": "Kế hoạch",
+    "debts": "Vay & cho vay",
+    "investments": "Đầu tư",
+    "reports": "Báo cáo",
+    "settings": "Cài đặt",
+    "more": "Thêm",
+    "primary": "Điều hướng chính",
+    "skipToContent": "Bỏ qua tới nội dung"
+  },
+  "shell": {
+    "quickAdd": "Ghi nhanh",
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Đi tới màn hình…",
+    "noResults": "Không có kết quả",
+    "toggleTheme": "Đổi giao diện sáng/tối",
+    "sampleMode": "Chế độ dữ liệu mẫu"
+  },
+  "provenance": {
+    "source": "Nguồn",
+    "asOf": "Cập nhật",
+    "version": "Phiên bản tính",
+    "sample": "Dữ liệu mẫu",
+    "sampleHint": "Màn hình này đang dùng dữ liệu mẫu cho tới khi API sẵn sàng."
+  },
+  "errors": {
+    "title": "Không tải được dữ liệu",
+    "network": "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
+    "invalidResponse": "Dữ liệu trả về không đúng hợp đồng API. Vui lòng báo lỗi.",
+    "notImplemented": "Tính năng này chưa có trên máy chủ.",
+    "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundBody": "Đường dẫn có thể đã thay đổi hoặc không tồn tại.",
+    "goHome": "Về trang tổng quan"
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "greeting": "Chào bạn",
+    "safeToSpend": "Có thể chi an toàn",
+    "safeToSpendHint": "Số tiền bạn có thể chi mà vẫn đủ cho các cam kết sắp tới.",
+    "horizon": "Khung thời gian",
+    "projectedLow": "Số dư thấp nhất dự kiến",
+    "confidence": "Độ tin cậy",
+    "confidenceMedium": "Trung bình",
+    "scenarioBase": "Kịch bản cơ sở",
+    "netWorth": "Giá trị tài sản ròng",
+    "assets": "Tài sản",
+    "liabilities": "Nợ phải trả",
+    "dueSoon": "Sắp đến hạn",
+    "dueSoonEmpty": "Không có khoản nào sắp đến hạn.",
+    "reviewInbox": "Hộp cần xem lại",
+    "reviewCount": "{count, plural, =0 {Mọi thứ đã gọn gàng} other {# mục cần bạn xác nhận}}",
+    "openReview": "Mở hộp xem lại",
+    "recent": "Giao dịch gần đây",
+    "debtInstallment": "Trả nợ",
+    "expense": "Chi phí",
+    "forecast": "Dự báo"
+  },
+  "transactions": {
+    "title": "Giao dịch",
+    "description": "Thu, chi và chuyển khoản giữa các tài khoản của bạn.",
+    "searchLabel": "Tìm giao dịch",
+    "searchPlaceholder": "Tên, danh mục…",
+    "kind": "Loại",
+    "status": "Trạng thái",
+    "account": "Tài khoản",
+    "allAccounts": "Mọi tài khoản",
+    "kinds": {
+      "expense": "Chi",
+      "income": "Thu",
+      "transfer": "Chuyển khoản"
+    },
+    "statuses": {
+      "posted": "Đã ghi sổ",
+      "expected": "Dự kiến",
+      "draft": "Nháp"
+    },
+    "empty": "Không có giao dịch phù hợp bộ lọc.",
+    "emptyAll": "Chưa có giao dịch nào. Bắt đầu bằng Ghi nhanh.",
+    "today": "Hôm nay",
+    "count": "{count, plural, other {# giao dịch}}",
+    "uncategorized": "Chưa phân loại",
+    "draftNote": "Nháp trong phiên này — chưa ghi sổ"
+  },
+  "quickAdd": {
+    "title": "Ghi nhanh",
+    "description": "Tạo một bản nháp. Bản nháp chưa phải bút toán đã ghi sổ.",
+    "amount": "Số tiền",
+    "amountPlaceholder": "0",
+    "category": "Danh mục",
+    "from": "Từ tài khoản",
+    "to": "Đến tài khoản",
+    "account": "Tài khoản",
+    "submit": "Lưu bản nháp",
+    "submitting": "Đang lưu…",
+    "success": "Đã lưu bản nháp",
+    "replayed": "Bản nháp này đã được lưu trước đó",
+    "transferNote": "Chuyển khoản giữa tài khoản của bạn không tính vào thu/chi.",
+    "errors": {
+      "amount": "Nhập số tiền lớn hơn 0.",
+      "destination": "Chọn tài khoản đích khác tài khoản nguồn.",
+      "category": "Chọn danh mục."
+    },
+    "categories": {
+      "food": "Ăn uống",
+      "transport": "Đi lại",
+      "shopping": "Mua sắm",
+      "bills": "Hóa đơn",
+      "health": "Sức khỏe",
+      "entertainment": "Giải trí",
+      "salary": "Lương",
+      "bonus": "Thưởng",
+      "otherIncome": "Thu nhập khác"
+    }
+  },
+  "accounts": {
+    "title": "Tài khoản",
+    "description": "Số dư theo từng tài khoản, ví và sổ tiết kiệm.",
+    "totalAssets": "Tổng tiền trong tài khoản",
+    "kinds": {
+      "bank": "Ngân hàng",
+      "savings": "Tiết kiệm",
+      "wallet": "Ví điện tử"
+    },
+    "reconciled": "Đã đối soát",
+    "manual": "Cập nhật thủ công",
+    "balance": "Số dư",
+    "activity": "Hoạt động",
+    "noActivity": "Chưa có giao dịch cho tài khoản này.",
+    "notFound": "Không tìm thấy tài khoản."
+  },
+  "review": {
+    "title": "Cần xem lại",
+    "description": "Xác nhận các mục hệ thống chưa chắc chắn trước khi chúng ảnh hưởng tới số liệu.",
+    "buckets": {
+      "review": "Cần xem",
+      "pending": "Đang chờ",
+      "posted": "Đã ghi sổ"
+    },
+    "kinds": {
+      "transfer": "Chuyển khoản",
+      "duplicate": "Có thể trùng",
+      "variance": "Lệch dự kiến",
+      "expected": "Dự kiến",
+      "expense": "Chi phí"
+    },
+    "approve": "Xác nhận",
+    "approveDuplicate": "Gộp bản trùng",
+    "dismiss": "Bỏ qua",
+    "approved": "Đã xác nhận",
+    "dismissed": "Đã bỏ qua",
+    "empty": "Không còn mục nào ở đây.",
+    "pnlUnknown": "Ảnh hưởng thu/chi: chờ xác nhận",
+    "pnlYes": "Có tính vào thu/chi"
+  },
+  "plan": {
+    "title": "Kế hoạch",
+    "description": "Cam kết cố định và mục tiêu. Kế hoạch không tự di chuyển tiền.",
+    "monthCommitted": "Cam kết tháng này",
+    "monthPaid": "Đã thanh toán",
+    "commitments": "Cam kết cố định",
+    "goals": "Mục tiêu",
+    "cadence": {
+      "weekly": "Hằng tuần",
+      "monthly": "Hằng tháng",
+      "quarterly": "Hằng quý",
+      "yearly": "Hằng năm"
+    },
+    "status": {
+      "scheduled": "Đã lên lịch",
+      "due": "Đến hạn",
+      "paid": "Đã trả",
+      "overdue": "Quá hạn",
+      "skipped": "Bỏ qua"
+    },
+    "kinds": {
+      "fixed-expense": "Chi cố định",
+      "debt-installment": "Trả nợ",
+      "saving": "Tiết kiệm",
+      "income": "Thu nhập"
+    },
+    "priority": {
+      "essential": "Thiết yếu",
+      "flexible": "Linh hoạt"
+    },
+    "pnl": {
+      "full": "Tính vào chi phí",
+      "interest-only": "Chỉ lãi & phí tính vào chi phí",
+      "none": "Không tính thu/chi"
+    },
+    "tolerance": "Dung sai ±{amount}",
+    "goalStatus": {
+      "active": "Đang thực hiện",
+      "paused": "Tạm dừng",
+      "achieved": "Đã đạt"
+    },
+    "contributed": "Đã góp",
+    "target": "Mục tiêu",
+    "targetDate": "Hạn",
+    "linkedTo": "Liên kết"
+  },
+  "debts": {
+    "title": "Vay & cho vay",
+    "description": "Gốc là dịch chuyển trên bảng cân đối, không phải thu nhập hay chi phí.",
+    "totalPayable": "Đang nợ",
+    "totalReceivable": "Đang cho vay",
+    "expectedRecoverable": "Dự kiến thu hồi",
+    "payables": "Khoản vay",
+    "receivables": "Khoản cho vay",
+    "outstanding": "Dư nợ gốc",
+    "original": "Gốc ban đầu",
+    "rate": "Lãi suất {rate}/năm",
+    "repaid": "Đã trả {percent}",
+    "nextInstallment": "Kỳ tới",
+    "principal": "Gốc",
+    "interest": "Lãi",
+    "fee": "Phí",
+    "total": "Tổng",
+    "pnlNote": "Chỉ lãi và phí được tính vào chi phí.",
+    "recovery": "Khả năng thu hồi {percent}",
+    "status": {
+      "active": "Đang hoạt động",
+      "overdue": "Quá hạn",
+      "settled": "Đã tất toán"
+    },
+    "empty": "Không có khoản nào."
+  },
+  "investments": {
+    "title": "Đầu tư",
+    "description": "Giá trị thị trường, giá vốn và lãi/lỗ chưa thực hiện.",
+    "marketValue": "Giá trị thị trường",
+    "costBasis": "Giá vốn",
+    "unrealized": "Lãi/lỗ chưa thực hiện",
+    "allocation": "Phân bổ",
+    "holdings": "Danh mục nắm giữ",
+    "activity": "Hoạt động gần đây",
+    "quantity": "SL {quantity}",
+    "price": "Giá",
+    "stale": "Giá cũ",
+    "manualPrice": "Giá thủ công",
+    "providerPrice": "Giá từ nguồn",
+    "assetClass": {
+      "equity": "Cổ phiếu",
+      "fund": "Quỹ",
+      "gold": "Vàng",
+      "crypto": "Tiền mã hóa",
+      "bond": "Trái phiếu"
+    },
+    "activityKind": {
+      "buy": "Mua",
+      "sell": "Bán",
+      "dividend": "Cổ tức",
+      "valuation": "Định giá"
+    }
+  },
+  "reports": {
+    "title": "Báo cáo",
+    "description": "Thu chi theo tháng, tài sản ròng và cơ cấu chi tiêu.",
+    "cashflow": "Thu và chi theo tháng",
+    "income": "Thu",
+    "expense": "Chi",
+    "net": "Ròng",
+    "month": "Tháng",
+    "netWorth": "Tài sản ròng",
+    "spending": "Cơ cấu chi tiêu",
+    "spendingNote": "Trả gốc vay không phải chi phí; chỉ lãi vay được tính.",
+    "tableCaption": "Bảng số liệu"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "description": "Tùy chọn hiển thị được lưu trên thiết bị này.",
+    "display": "Hiển thị",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "themes": {
+      "system": "Theo thiết bị",
+      "light": "Sáng",
+      "dark": "Tối"
+    },
+    "timezone": "Múi giờ",
+    "timezoneDevice": "Theo thiết bị ({zone})",
+    "data": "Dữ liệu của bạn",
+    "export": "Xuất dữ liệu",
+    "exportHint": "Gói dữ liệu máy đọc được, kèm schema và phiên bản.",
+    "delete": "Xóa tài khoản & dữ liệu",
+    "deleteHint": "Hiển thị phạm vi xóa và ngoại lệ lưu giữ trước khi xác nhận.",
+    "connection": "Kết nối API",
+    "mode": "Chế độ",
+    "baseUrl": "Địa chỉ API",
+    "modules": "Nguồn theo module",
+    "modeMock": "Dữ liệu mẫu (mock)",
+    "modeHttp": "HTTP API"
+  },
+  "auth": {
+    "title": "Đăng nhập Zenval",
+    "subtitle": "Bức tranh tài chính cá nhân, rõ ràng và riêng tư.",
+    "google": "Tiếp tục với Google",
+    "or": "hoặc",
+    "email": "Email",
+    "emailPlaceholder": "ban@vi-du.com",
+    "continue": "Tiếp tục với email",
+    "privacy": "Zenval không bán dữ liệu tài chính và không tự thực hiện giao dịch thay bạn.",
+    "demo": "Xác thực chưa được kết nối; bạn sẽ vào không gian mẫu."
+  }
+}
+

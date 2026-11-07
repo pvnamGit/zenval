@@ -1,0 +1,138 @@
+@startuml
+title Zenval — Classes và dependencies hiện tại
+caption IMPLEMENTED — source snapshot 2026-11-07
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package "packages/shared-kernel" {
+  class Currency <<implemented>> {
+    code: string
+    +{static} from(code): Currency
+    +equals(other): boolean
+  }
+  class Money <<implemented>> {
+    -decimalAmount: Decimal
+    currency: Currency
+    +amount: string
+    +{static} from(amount, currencyCode): Money
+    +{static} zero(currencyCode): Money
+    +add(other): Money
+    +negate(): Money
+    +isZero(): boolean
+    +equals(other): boolean
+  }
+  interface Clock {
+    +now(): Date
+  }
+  class SystemClock {
+    +now(): Date
+  }
+  SystemClock ..|> Clock
+  Money *-- Currency
+}
+package "packages/contexts/ledger/domain" {
+  interface LedgerEntryInput {
+    accountId: string
+    amount: Money
+  }
+  class BusinessEvent <<implemented>> {
+    id: string
+    workspaceId: string
+    entries: readonly LedgerEntryInput[]
+    +{static} post(input): BusinessEvent
+  }
+  BusinessEvent "1" *-- "2..*" LedgerEntryInput
+  LedgerEntryInput --> Money
+}
+package "packages/contracts (browser-safe Zod schemas)" {
+  class MoneyDto {
+    amount: string
+currency: string
+  }
+  class DashboardSnapshot {
+    mode: demo
+workspaceId: demo-workspace
+asOf: ISODateTime
+  }
+  class DemoFinanceSnapshot {
+    mode: demo
+source: mock-json
+workspaceId: demo-workspace
+  }
+  class DemoTransaction {
+    status: posted / expected / draft
+source: mock-json
+pnlImpact: boolean
+  }
+  class CreateDemoTransactionRequest {
+    kind: expense / income / transfer
+amount: positive VND integer string
+  }
+  class CreateDemoTransactionResponse {
+    transaction: DemoTransaction
+replayed: boolean
+  }
+  DemoFinanceSnapshot "1" *-- "0..*" DemoTransaction
+  CreateDemoTransactionResponse --> DemoTransaction
+}
+package "apps/api (NestJS composition root)" {
+  class AppModule
+  class DemoFinanceController
+  class DemoFinanceService <<process-local demo adapter>> {
+    +getSnapshot(): DemoFinanceSnapshot
+    +createTransaction(request, key, sessionId): CreateDemoTransactionResponse
+  }
+  class DemoDashboardController
+  class DemoDashboardService <<fixture adapter>> {
+    +getSnapshot(): DashboardSnapshot
+  }
+  class DatabaseService {
+    +isReady(): Promise<boolean>
+    +onModuleDestroy(): Promise<void>
+  }
+  class HealthController
+  AppModule ..> DemoFinanceController
+  AppModule ..> DemoDashboardController
+  AppModule ..> HealthController
+  DemoFinanceController --> DemoFinanceService
+  DemoDashboardController --> DemoDashboardService
+  HealthController --> DatabaseService
+}
+package "packages/database" {
+  class "createDatabase(databaseUrl)" as Factory <<factory function>>
+  class "postgres-js client + Drizzle db" as Conn
+  Factory --> Conn : returns
+}
+package "apps/worker" {
+  class WorkerModule
+  class WorkerHealthController
+  WorkerModule ..> WorkerHealthController
+}
+DatabaseService --> Factory
+DemoFinanceService ..> DemoFinanceSnapshot
+DemoFinanceService ..> CreateDemoTransactionRequest
+DemoFinanceService ..> CreateDemoTransactionResponse
+DemoDashboardService ..> DashboardSnapshot
+note bottom of BusinessEvent
+  Current invariant: >=2 entries, same currency and exact sum zero.
+  Entry input has no persisted entry ID or workspaceId of its own.
+  No Ledger application handler/repository adapter connects it to DB yet.
+  Current Money validation is finite Decimal + currency code regex.
+end note
+note bottom of DemoFinanceService
+  Synthetic JSON seed; captures remain draft, pnlImpact=false.
+  Idempotency uses hashed demo session/key in a bounded process-local Map.
+  Runtime captures are returned, not added to getSnapshot() seed.
+  No ledger/domain posting or PostgreSQL persistence.
+  Demo 'posted' fixture labels are not real posted ledger facts.
+end note
+note bottom of WorkerModule
+  Worker currently only exposes health; no jobs/outbox/provider adapters.
+  This diagram summarizes relevant fields, not every DTO/property.
+end note
+legend bottom
+  COMPLIANCE GAP: current schema stores raw financial columns.
+  Required encryption gateway/storage migration is NOT implemented.
+endlegend
+@enduml

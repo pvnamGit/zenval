@@ -54,7 +54,9 @@ Use `$zenval-adlc-delivery` for feature, bug, refactor, schema, or cross-package
    unchanged failure. Escalate with evidence after that.
 5. Use a fresh checker for risky or non-trivial changes. The checker returns `PASS`, `REVISE`, or
    `ESCALATE`; the author does not declare its own work accepted.
-6. Human approval remains mandatory for release, external side effects, security exceptions,
+6. Update task status and record a handoff using
+   [`docs/agent-harness/task-memory.md`](docs/agent-harness/task-memory.md); keep partial work open.
+7. Human approval remains mandatory for release, external side effects, security exceptions,
    destructive migrations, and changes to financial meaning.
 
 ## Commands

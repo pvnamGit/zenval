@@ -1,0 +1,197 @@
+@startuml
+title Zenval — Obligations, Investments và Market Data
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package Obligations {
+  class Obligation <<aggregate>> {
+    id: ObligationId
+    workspaceId: WorkspaceId
+    direction: payable / receivable
+    counterpartyAlias: string
+    originalPrincipal: Money
+    outstandingPrincipal: Money
+    interestPolicy: VersionedPolicy
+    allocationPolicy: VersionedPolicy
+    status: ObligationStatus
+    version: integer
+  }
+  class ObligationSchedule <<entity>> {
+    workspaceId: WorkspaceId
+    version: integer
+    effectiveFrom: LocalDate
+  }
+  class Installment <<entity>> {
+    id: InstallmentId
+    workspaceId: WorkspaceId
+    dueDate: LocalDate
+    principal: Money
+    interest: Money
+    fee: Money
+    tax: Money
+  }
+  class ObligationEvent <<entity>> {
+    workspaceId: WorkspaceId
+    type: disbursement / payment / collection / reversal / write-off
+    businessEventId: BusinessEventId
+    installmentId: InstallmentId [0..1]
+    principal: Money
+    interest: Money
+    fee: Money
+    tax: Money
+  }
+  class RecoverabilityAssessment <<entity>> {
+    workspaceId: WorkspaceId
+    probability: DecimalString
+    estimatedRecoverable: Money
+    rationale: string
+    assessedAt: Instant
+    sourceIds: SourceRef[]
+    calculationVersion: string
+  }
+  class Reminder <<entity>> {
+    workspaceId: WorkspaceId
+    dueAt: Instant
+    notificationId: NotificationId [0..1]
+  }
+  class SimulationScenario <<aggregate / draft>> {
+    workspaceId: WorkspaceId
+    assumptions: Assumption[]
+    sourceIds: SourceRef[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  Obligation "1" *-- "1..*" ObligationSchedule
+  ObligationSchedule "1" *-- "0..*" Installment
+  Obligation "1" *-- "0..*" ObligationEvent
+  Obligation "1" *-- "0..*" RecoverabilityAssessment
+  Obligation "1" *-- "0..*" Reminder
+  SimulationScenario ..> Obligation : input snapshot
+}
+package Investments {
+  class Portfolio <<aggregate>> {
+    workspaceId: WorkspaceId
+  }
+  class InvestmentAccount <<entity>> {
+    workspaceId: WorkspaceId
+    cashAccountId: AccountId [0..1]
+  }
+  class InvestmentActivity <<aggregate>> {
+    id: ActivityId
+    workspaceId: WorkspaceId
+    instrumentId: InstrumentId
+    investmentAccountId: InvestmentAccountId
+    type: ActivityType
+    quantity: DecimalString
+    price: Money
+    fee: Money
+    tax: Money
+    cashBusinessEventId: BusinessEventId [0..1]
+    occurredAt: Instant
+  }
+  class Lot <<entity>> {
+    workspaceId: WorkspaceId
+    quantity: DecimalString
+    costBasis: Money
+    acquisitionDate: LocalDate
+  }
+  class HoldingSnapshot <<projection>> {
+    workspaceId: WorkspaceId
+    investmentAccountId: InvestmentAccountId
+    instrumentId: InstrumentId
+    quantity: DecimalString
+    costBasis: Money
+    sourceActivityIds: ActivityId[]
+    priceSnapshotId: PriceSnapshotId [0..1]
+    fxRateId: FXRateId [0..1]
+    asOf: Instant
+    calculationVersion: string
+  }
+  class CorporateAction <<aggregate>> {
+    workspaceId: WorkspaceId
+    instrumentId: InstrumentId
+    type: CorporateActionType
+    effectiveDate: LocalDate
+    reviewState: ReviewState
+  }
+  Portfolio "1" -- "0..*" InvestmentAccount
+  InvestmentAccount "1" -- "0..*" InvestmentActivity
+  InvestmentActivity "1" -- "0..*" Lot : source activity
+  InvestmentAccount "1" -- "0..*" HoldingSnapshot
+  CorporateAction --> InvestmentActivity : confirmed effects
+}
+package "Market Data" {
+  class Instrument <<aggregate / catalog>> {
+    id: InstrumentId
+    assetClass: AssetClass
+    quoteCurrency: Currency
+  }
+  class InstrumentIdentifier <<entity / catalog>> {
+    type: ISIN / symbol-exchange / contract
+    value: string
+  }
+  class DataProvider <<catalog>> {
+    id: ProviderId
+    licenseMetadata: LicenseMetadata
+  }
+  class ProviderSymbolMapping <<entity / catalog>> {
+    providerId: ProviderId
+    instrumentId: InstrumentId
+    externalSymbol: string
+  }
+  class PriceSnapshot <<aggregate / immutable>> {
+    instrumentId: InstrumentId
+    workspaceId: WorkspaceId [manual only]
+    price: Money
+    providerId: ProviderId [0..1]
+    source: manual / provider
+    observedAt: Instant
+    fetchedAt: Instant
+    quality: QualityFlag[]
+  }
+  class FXRate <<aggregate / immutable>> {
+    workspaceId: WorkspaceId [manual only]
+    pair: CurrencyPair
+    rate: DecimalString
+    source: SourceRef
+    observedAt: Instant
+    fetchedAt: Instant
+  }
+  class DataQualityFlag <<value object>> {
+    reason: stale / missing / suspect
+  }
+  Instrument "1" *-- "1..*" InstrumentIdentifier
+  Instrument "1" -- "0..*" ProviderSymbolMapping
+  ProviderSymbolMapping --> DataProvider
+  Instrument "1" -- "0..*" PriceSnapshot
+  PriceSnapshot *-- DataQualityFlag
+  FXRate *-- DataQualityFlag
+}
+InvestmentActivity ..> Instrument : stable ID contract
+HoldingSnapshot ..> PriceSnapshot : price reference
+HoldingSnapshot ..> FXRate : conversion reference
+note bottom of ObligationEvent
+  Principal = balance-sheet movement, not income/expense.
+  Interest/fee/tax classified separately by direction and approved policy.
+  Obligation update + Ledger posting share one DB transaction.
+  Allocation order and accrual policy are not finalized here.
+end note
+note bottom of HoldingSnapshot
+  Rebuild from activity/cost-basis policy; do not duplicate brokerage cash.
+  Cost-basis method/lot accounting and later-phase actions need accepted spec.
+  InstrumentActivity in Architecture = InvestmentActivity here (Activity in PRD).
+end note
+note bottom of PriceSnapshot
+  Public provider catalog/snapshots may be shared reference data.
+  Manual/private valuations and all positions are workspace scoped.
+  Proposed scope split, not implemented tenancy policy.
+  Missing price is unavailable/stale, never implicit zero.
+end note
+legend bottom
+  Attributes describe trusted in-memory domain values, NOT plaintext DB columns.
+  All private financial persistence uses FinancialCryptoGateway encrypted envelopes.
+  See financial-data-encryption.md; implementation/migration is still pending.
+endlegend
+@enduml

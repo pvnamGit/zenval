@@ -1,0 +1,162 @@
+@startuml
+title Zenval — Commitments, Planning và Goals
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package "Commitments & Planning" {
+  class RecurringRule <<entity>> {
+    workspaceId: WorkspaceId
+    cadence: Cadence
+    startDate: LocalDate
+    endDate: LocalDate [0..1]
+    nextOccurrence: LocalDate
+    policy: expected / pending / reminder
+  }
+  class FixedCommitment <<aggregate>> {
+    id: CommitmentId
+    workspaceId: WorkspaceId
+    type: expense / debt-installment / own-transfer / saving
+    standardAmount: Money
+    tolerance: AmountOrPercentage
+    paymentAccountId: AccountId
+    obligationId: ObligationId [0..1]
+    priority: Priority
+    status: active / paused / ended
+    version: integer
+  }
+  class ExpectedOccurrence <<entity>> {
+    id: OccurrenceId
+    workspaceId: WorkspaceId
+    dueDate: LocalDate
+    timezone: IanaTimezone
+    amount: Money
+    installmentId: InstallmentId [0..1]
+    status: expected / due / overdue / paid / skipped / rescheduled
+    version: integer
+  }
+  class CommitmentMatch <<entity>> {
+    workspaceId: WorkspaceId
+    occurrenceId: OccurrenceId
+    actualTransactionId: TransactionId
+    confirmedAt: Instant
+    undoneAt: Instant [0..1]
+  }
+  class Bill <<entity>> {
+    workspaceId: WorkspaceId
+    occurrenceId: OccurrenceId
+    dueDate: LocalDate
+    amount: Money
+  }
+  class Plan <<aggregate>> {
+    id: PlanId
+    workspaceId: WorkspaceId
+    period: Period
+    status: draft / active / archived
+    version: integer
+  }
+  class PlanLine <<entity>> {
+    workspaceId: WorkspaceId
+    categoryId: CategoryId [0..1]
+    plannedAmount: Money
+  }
+  class Allocation <<entity>> {
+    workspaceId: WorkspaceId
+    targetRef: SourceRef
+    amountOrShare: AllocationValue
+  }
+  class CashBufferPolicy <<value object>> {
+    minimum: Money
+    horizonPolicy: string
+    version: string
+  }
+  class ForecastRun <<aggregate / derived>> {
+    id: ForecastRunId
+    workspaceId: WorkspaceId
+    asOf: Instant
+    horizon: Period
+    timezone: IanaTimezone
+    scenario: conservative / base / optimistic
+    inputSnapshotIds: SourceRef[]
+    confidenceWeights: DecimalString[]
+    assumptions: Assumption[]
+    calculationVersion: string
+  }
+  class ForecastPoint <<entity / derived>> {
+    workspaceId: WorkspaceId
+    date: LocalDate
+    projectedBalance: Money
+    sourceIds: SourceRef[]
+  }
+  class SafeToSpendSnapshot <<projection>> {
+    workspaceId: WorkspaceId
+    amount: Money
+    horizon: Period
+    components: SourceRef[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  FixedCommitment --> RecurringRule
+  FixedCommitment "1" *-- "0..*" ExpectedOccurrence
+  ExpectedOccurrence "1" -- "0..*" CommitmentMatch
+  Bill --> ExpectedOccurrence
+  Plan "1" *-- "0..*" PlanLine
+  PlanLine "1" *-- "0..*" Allocation
+  Plan *-- CashBufferPolicy
+  ForecastRun "1" *-- "0..*" ForecastPoint
+  SafeToSpendSnapshot --> ForecastRun : input version
+}
+package Goals {
+  class Goal <<aggregate>> {
+    id: GoalId
+    workspaceId: WorkspaceId
+    target: Money
+    targetDate: LocalDate
+    priority: Priority
+    status: GoalStatus
+  }
+  class GoalFundingLink <<entity>> {
+    workspaceId: WorkspaceId
+    source: AccountId / HoldingId / TransactionId / PlanLineId
+    allocation: AllocationValue
+    overlapConfirmed: boolean
+  }
+  class GoalProjection <<derived>> {
+    workspaceId: WorkspaceId
+    inputSnapshotIds: SourceRef[]
+    actualContributed: Money
+    marketMovement: Money
+    plannedContribution: Money
+    gap: Money
+    scenario: string
+    assumptions: Assumption[]
+    confidence: Confidence
+    asOf: Instant
+    calculationVersion: string
+  }
+  Goal "1" *-- "0..*" GoalFundingLink
+  Goal "1" -- "0..*" GoalProjection
+}
+note bottom of CommitmentMatch
+  At most one active occurrence per actual transaction.
+  Many actuals per occurrence require confirmation; undo is auditable.
+  Replace matched expected amounts with actuals once, avoiding double-count.
+  Debt occurrence references Obligation schedule; no duplicate schedule owner.
+end note
+note bottom of GoalFundingLink
+  Allocation does not move money or change posted facts.
+  Prevent double allocation unless user confirms overlap.
+end note
+note bottom of ForecastRun
+  Read Ledger/Obligations/Goals via application query ports.
+  Expected does not mean posted. Recompute/invalidate on material input change.
+  STS horizon/formula and cadence policy remain subject to accepted spec.
+  RecurringRule ownership here is proposed; Capture detects and proposes rules.
+end note
+legend bottom
+  Attributes describe trusted in-memory domain values, NOT plaintext DB columns.
+  All private financial persistence uses FinancialCryptoGateway encrypted envelopes.
+  See financial-data-encryption.md; implementation/migration is still pending.
+endlegend
+@enduml

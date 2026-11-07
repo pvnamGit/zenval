@@ -1,0 +1,16 @@
+{
+  "task_specs": 44,
+  "created": 40,
+  "reused": 4,
+  "superseded_not_planned": 12,
+  "all_tasks_backlog": true,
+  "dependency_links_resolved": true,
+  "roadmap_and_gates_updated": [6, 19, 22],
+  "harness_issues_preserved": [1, 2, 3, 4, 26],
+  "project_total_items": 52,
+  "active_items_observed": 52,
+  "result": "PASS",
+  "all_tasks_children_of_roadmap": true,
+  "independent_review": "PASS — scoped backlog publication",
+  "repository_full_gate": "FAIL — format:check outside scope; subsequent stages not reached"
+}

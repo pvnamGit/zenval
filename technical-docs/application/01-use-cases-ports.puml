@@ -1,0 +1,169 @@
+@startuml
+title Zenval — Application handlers và ports
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+left to right direction
+package "Interface (apps/api)" {
+  class RestController <<inbound adapter>>
+  class RequestDto <<browser-safe contract>>
+  RestController ..> RequestDto : validates / maps
+}
+package "Application contracts" {
+  class ActorContext <<value>> {
+    userId: UserId
+    workspaceId: WorkspaceId
+    permissions: Permission[]
+    correlationId: string
+  }
+  class CommandEnvelope <<contract>> {
+    actor: ActorContext
+    idempotencyKey: string
+    expectedVersion: integer [0..1]
+  }
+  interface AuthorizationPort {
+    +assertAllowed(actor, resource, action)
+  }
+  interface UnitOfWork {
+    +execute(workspaceId, operation)
+  }
+  interface IdempotencyStore {
+    +claimOrReplay(scope, actor, key, requestHash)
+  }
+  interface OutboxPort {
+    +append(eventEnvelope)
+  }
+  interface Clock {
+    +now(): Instant
+  }
+}
+package "Identity & Access application" {
+  class SetupWorkspaceHandler
+  class UpdatePreferenceHandler
+  class RevokeConsentHandler
+}
+package "Ledger application" {
+  interface LedgerPostingPort {
+    +post(command, transactionContext): PostingResult
+  }
+  class PostTransferHandler
+  class PostBusinessEventHandler
+  class ReconcileAccountHandler
+  interface BusinessEventRepository {
+    +find(workspaceId, id)
+    +save(event, expectedVersion, transactionContext)
+  }
+  interface AccountRepository
+  interface LedgerFactsQueryPort {
+    +snapshot(workspaceId, cutoff): LedgerFactsSnapshot
+  }
+  class BusinessEvent <<domain aggregate>>
+  PostBusinessEventHandler ..|> LedgerPostingPort
+  PostTransferHandler ..> LedgerPostingPort
+  ReconcileAccountHandler ..> LedgerPostingPort : confirmed adjustment
+  PostBusinessEventHandler ..> BusinessEventRepository
+  PostBusinessEventHandler ..> AccountRepository
+  PostBusinessEventHandler ..> BusinessEvent : invokes invariant
+  PostBusinessEventHandler ..> AuthorizationPort
+  PostBusinessEventHandler ..> IdempotencyStore
+  PostBusinessEventHandler ..> UnitOfWork
+  PostBusinessEventHandler ..> OutboxPort
+  PostBusinessEventHandler ..> Clock
+}
+package "Classification & Capture application" {
+  class ImportPreviewHandler
+  class CommitImportHandler
+  class ApproveReviewItemHandler
+  interface ImportRepository
+  CommitImportHandler ..> LedgerPostingPort
+  ApproveReviewItemHandler ..> LedgerPostingPort
+  ImportPreviewHandler ..> ImportRepository
+  CommitImportHandler ..> ImportRepository
+}
+package "Obligations application" {
+  class RecordObligationPaymentHandler
+  class SimulateObligationHandler
+  interface ObligationRepository
+  interface ObligationScheduleQueryPort
+  class Obligation <<domain aggregate>>
+  RecordObligationPaymentHandler ..> ObligationRepository
+  RecordObligationPaymentHandler ..> Obligation : allocate by policy
+  RecordObligationPaymentHandler ..> LedgerPostingPort
+  RecordObligationPaymentHandler ..> UnitOfWork : shared transaction
+  SimulateObligationHandler ..> ObligationScheduleQueryPort
+}
+package "Investments / Market Data application" {
+  class RecordInvestmentActivityHandler
+  class RefreshMarketDataHandler
+  interface InvestmentRepository
+  interface MarketDataPort
+  interface HoldingQueryPort
+  RecordInvestmentActivityHandler ..> InvestmentRepository
+  RecordInvestmentActivityHandler ..> LedgerPostingPort : cash leg
+  RecordInvestmentActivityHandler ..> UnitOfWork
+  RefreshMarketDataHandler ..> MarketDataPort
+}
+package "Commitments & Planning / Goals application" {
+  class MatchCommitmentHandler
+  class RunForecastHandler
+  class UpdateGoalFundingHandler
+  class CreatePlanDraftHandler
+  interface PlanningRepository
+  interface GoalRepository
+  interface GoalAllocationQueryPort
+  interface PlanningSnapshotQueryPort
+  MatchCommitmentHandler ..> LedgerFactsQueryPort
+  MatchCommitmentHandler ..> PlanningRepository
+  RunForecastHandler ..> LedgerFactsQueryPort
+  RunForecastHandler ..> ObligationScheduleQueryPort
+  RunForecastHandler ..> GoalAllocationQueryPort
+  RunForecastHandler ..> PlanningRepository
+  UpdateGoalFundingHandler ..> GoalRepository
+  UpdateGoalFundingHandler ..> HoldingQueryPort
+  UpdateGoalFundingHandler ..> LedgerFactsQueryPort
+  CreatePlanDraftHandler ..> PlanningRepository
+}
+package "Reporting / Suggestions application" {
+  class GenerateReportHandler
+  class ClosePeriodHandler
+  class GenerateSuggestionHandler
+  class ApplySuggestionToPlanHandler
+  interface ReportingSnapshotQueryPort
+  GenerateReportHandler ..> LedgerFactsQueryPort
+  GenerateReportHandler ..> HoldingQueryPort
+  GenerateReportHandler ..> ObligationScheduleQueryPort
+  ClosePeriodHandler ..> ReportingSnapshotQueryPort
+  GenerateSuggestionHandler ..> PlanningSnapshotQueryPort
+  GenerateSuggestionHandler ..> ReportingSnapshotQueryPort
+  ApplySuggestionToPlanHandler ..> CreatePlanDraftHandler : confirmed draft only
+}
+package "Notifications / Audit application" {
+  class DeliverNotificationHandler
+  class ExportWorkspaceHandler
+  class DeleteWorkspaceHandler
+  interface NotificationDeliveryPort
+  interface DataRightsPort
+  DeliverNotificationHandler ..> NotificationDeliveryPort
+  ExportWorkspaceHandler ..> DataRightsPort
+  DeleteWorkspaceHandler ..> DataRightsPort
+}
+RestController ..> PostTransferHandler : example command
+RestController ..> RecordObligationPaymentHandler : example command
+RestController ..> LedgerFactsQueryPort : example query
+RestController ..> CommandEnvelope
+note bottom of UnitOfWork
+  All command handlers enforce authorization and workspace scope.
+  Mutations use concurrency checks; idempotent writes replay safely.
+  Save aggregates + ledger facts + outbox in the same transaction.
+  Caller transactionContext prevents nested independent commits.
+  Query ports return stable DTO snapshots, never ORM/domain objects.
+  Edges illustrate representative flows, not an exhaustive dependency list.
+end note
+note bottom of BusinessEvent
+  Domain is framework/ORM free.
+  Infrastructure implements inward-owned ports.
+  No application handler executes a real bank payment or trade.
+end note
+@enduml

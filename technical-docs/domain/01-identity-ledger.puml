@@ -1,0 +1,170 @@
+@startuml
+title Zenval — Identity và Ledger
+caption TARGET LOGICAL MODEL — values in trusted memory; private persistence encrypted
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+package "Identity & Access" {
+  class User <<aggregate>> {
+    id: UserId
+    status: UserStatus
+  }
+  class Workspace <<aggregate>> {
+    id: WorkspaceId
+    baseCurrency: Currency
+    kind: personal
+  }
+  class Membership <<entity>> {
+    userId: UserId
+    workspaceId: WorkspaceId
+    role: Role
+  }
+  class Preference <<entity>> {
+    userId: UserId
+    language: Locale
+    timezoneOverride: IanaTimezone [0..1]
+    themeOverride: Theme [0..1]
+  }
+  class Consent <<aggregate>> {
+    workspaceId: WorkspaceId
+    purpose: string
+    source: string
+    policyVersion: string
+    revokedAt: Instant [0..1]
+  }
+  class Session <<entity>> {
+    userId: UserId
+    expiresAt: Instant
+    revokedAt: Instant [0..1]
+  }
+  User "1" -- "0..*" Membership
+  Workspace "1" -- "1..*" Membership
+  User "1" *-- "0..*" Preference
+  User "1" -- "0..*" Session
+  Workspace "1" -- "0..*" Consent
+}
+package "Shared values (proposed contracts)" {
+  class Money <<value object>> {
+    amount: DecimalString
+    currency: Currency
+  }
+  class Currency <<value object>> {
+    code: ISO4217
+  }
+  class Conversion <<value object>> {
+    original: Money
+    base: Money [0..1]
+    fxRateId: FXRateId [0..1]
+    method: string
+    calculationVersion: string
+  }
+  Money *-- Currency
+  Conversion *-- Money
+}
+package Ledger {
+  class Account <<aggregate>> {
+    id: AccountId
+    workspaceId: WorkspaceId
+    type: AccountType
+    currency: Currency
+    openingBalance: Money
+    openingDate: LocalDate
+    liquidityClass: LiquidityClass
+    includeInNetWorth: boolean
+    status: AccountStatus
+    version: integer
+  }
+  class BusinessEvent <<aggregate>> {
+    id: BusinessEventId
+    workspaceId: WorkspaceId
+    type: EventType
+    status: EventStatus
+    occurredAt: Instant
+    postedAt: Instant [0..1]
+    sourceType: string
+    sourceExternalId: string [0..1]
+    reversalOfId: BusinessEventId [0..1]
+    +post()
+    +reverse()
+  }
+  class LedgerEntry <<entity>> {
+    id: LedgerEntryId
+    workspaceId: WorkspaceId
+    accountId: AccountId
+    signedAmount: Conversion
+  }
+  class Transaction <<business representation>> {
+    id: TransactionId
+    workspaceId: WorkspaceId
+    businessEventId: BusinessEventId [0..1]
+    kind: TransactionType
+    status: draft / pending / expected / posted
+    categoryId: CategoryId [0..1]
+    counterpartyId: CounterpartyId [0..1]
+    sourceRef: SourceRef
+    reviewState: ReviewState
+  }
+  class Split <<entity>> {
+    workspaceId: WorkspaceId
+    categoryId: CategoryId [0..1]
+    component: principal / interest / fee / tax / category
+    amount: Money
+  }
+  class TransferLink <<entity>> {
+    workspaceId: WorkspaceId
+    businessEventId: BusinessEventId
+    sourceAccountId: AccountId
+    destinationAccountId: AccountId
+  }
+  class AccountBalanceSnapshot <<projection>> {
+    workspaceId: WorkspaceId
+    accountId: AccountId
+    balance: Money
+    kind: ledger / reconciled / imported
+    sourceIds: SourceRef[]
+    asOf: Instant
+    calculationVersion: string
+  }
+  class Reconciliation <<aggregate>> {
+    id: ReconciliationId
+    workspaceId: WorkspaceId
+    accountId: AccountId
+    statementDate: LocalDate
+    expected: Money
+    calculated: Money
+    difference: Money
+    adjustmentEventId: BusinessEventId [0..1]
+  }
+  BusinessEvent "1" *-- "2..*" LedgerEntry
+  LedgerEntry "0..*" --> "1" Account : accountId
+  LedgerEntry *-- Conversion
+  Transaction "0..*" --> "0..1" BusinessEvent : committed fact
+  Transaction "1" *-- "0..*" Split
+  TransferLink --> BusinessEvent
+  Account "1" -- "0..*" AccountBalanceSnapshot
+  Account "1" -- "0..*" Reconciliation
+}
+note bottom of BusinessEvent
+  Only Ledger application writes posted facts.
+  Posted event balances under approved accounting/FX policy.
+  Correction = reversal/new event with audit.
+  Transfer and principal movement have no P&L effect.
+  Draft/pending/expected records do not post entries.
+end note
+note bottom of Workspace
+  Every financial entity is workspace scoped; references must match tenant.
+  User/Session are identity-level; market catalog scope is documented separately.
+  P1: one personal workspace; membership is future-ready, not shared finance.
+end note
+note bottom of Conversion
+  Exact decimal only. Preserve original amount/currency.
+  FX precision/rounding policy requires separate accepted spec.
+  This target extends the smaller implemented single-currency model.
+end note
+legend bottom
+  Attributes describe trusted in-memory domain values, NOT plaintext DB columns.
+  All private financial persistence uses FinancialCryptoGateway encrypted envelopes.
+  See financial-data-encryption.md; implementation/migration is still pending.
+endlegend
+@enduml

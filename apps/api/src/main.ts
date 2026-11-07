@@ -9,6 +9,12 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
 
+  app.enableCors({
+    origin: environment.WEB_ORIGIN,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "X-Demo-Session-Id", "X-Idempotency-Key"],
+    credentials: false,
+  });
   app.setGlobalPrefix("v1");
   app.enableShutdownHooks();
   await app.listen(environment.API_PORT, environment.API_HOST);

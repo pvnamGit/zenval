@@ -1,0 +1,53 @@
+@startuml
+title Zenval — Bounded contexts
+caption PROPOSED TARGET — chưa phải implementation / scope MVP đã duyệt
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype polyline
+skinparam nodesep 55
+skinparam ranksep 90
+hide empty methods
+left to right direction
+package "Identity & Access" as IAM {}
+package Ledger as L {}
+package "Classification & Capture" as C {}
+package "Commitments & Planning" as P {}
+package Obligations as O {}
+package Investments as I {}
+package Goals as G {}
+package "Market Data" as M {}
+package Reporting as R {}
+package Suggestions as S {}
+package Notifications as N {}
+package "Audit & Compliance" as A {}
+L ..> IAM : authorization port
+C ..> L : posting application port
+O ..> L : posting application port
+I ..> L : cash posting application port
+I ..> M : price / FX query port
+L ..> M : FX reference port
+G ..> L : account projection
+G ..> I : holding projection
+P ..> L : facts query port
+P ..> O : schedules query port
+P ..> G : allocation query port
+S ..> P : read snapshots / create draft
+R ..> L : read projections
+R ..> O : read projections
+R ..> I : read projections
+R ..> G : read projections
+R ..> P : read projections
+N ..> P : consume integration events
+N ..> O : consume integration events
+A ..> L : consume audit events
+A ..> P : consume audit events
+note bottom of A
+  Audit subscriptions apply across all contexts.
+  Export/delete use explicit application ports.
+end note
+legend bottom
+  A ..> B = A consumes B through a port/contract/event.
+  No direct cross-context domain/table access.
+  Source: ARCHITECTURE §§5–6; not deployment topology.
+endlegend
+@enduml

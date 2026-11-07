@@ -53,6 +53,10 @@ State lives in artifacts rather than an unbounded transcript:
 - architecture decisions in `architecture/adr/`;
 - code, tests, gate output, and concise decision records in the worktree.
 
+For completed tasks, update the authoritative tracker and write a durable handoff using
+[task status and handoff memory](task-memory.md). Partial work stays open until its own criteria and
+required human approvals are satisfied.
+
 Do not record private chain-of-thought. Record inputs, decisions, assumptions, commands, observable
 results, approvals, and remaining risks.
 

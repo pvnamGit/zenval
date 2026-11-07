@@ -1,0 +1,3 @@
+[agents.zenval-memory-handoff]
+description = "Maintain evidence-backed task status and concise project handoff memory."
+config_file = "agents/zenval-memory-handoff.toml"

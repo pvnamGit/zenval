@@ -1,0 +1,141 @@
+@startuml
+title Zenval — Infrastructure adapters và durable records
+caption PROPOSED TARGET — chưa phải implementation / scope MVP đã duyệt
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+left to right direction
+package "Inward-owned ports" {
+  interface RepositoryPort
+  interface UnitOfWork
+  interface SnapshotQueryPort
+  interface OutboxPort
+  interface JobQueuePort
+  interface MarketDataPort
+  interface ObjectStoragePort
+  interface NotificationDeliveryPort
+  interface DataRightsPort
+}
+package "Infrastructure (proposed adapters)" {
+  class DrizzleContextRepository {
+    +find(workspaceId, id)
+    +save(aggregate, expectedVersion, tx)
+  }
+  class PostgresUnitOfWork
+  class SqlSnapshotQueryAdapter
+  class PostgresOutboxAdapter
+  class OutboxDispatcher
+  class QueueHttpAdapter <<pilot candidate>>
+  class SignedJobEndpoint
+  class JobRunner
+  class ProviderMarketDataAdapter
+  class ObjectStorageAdapter
+  class EmailDeliveryAdapter
+  class ContextDataRightsAdapter
+  class PersistenceMapper
+  class FinancialCryptoGateway <<sole crypto module>>
+}
+DrizzleContextRepository ..|> RepositoryPort
+PostgresUnitOfWork ..|> UnitOfWork
+SqlSnapshotQueryAdapter ..|> SnapshotQueryPort
+PostgresOutboxAdapter ..|> OutboxPort
+QueueHttpAdapter ..|> JobQueuePort
+ProviderMarketDataAdapter ..|> MarketDataPort
+ObjectStorageAdapter ..|> ObjectStoragePort
+EmailDeliveryAdapter ..|> NotificationDeliveryPort
+ContextDataRightsAdapter ..|> DataRightsPort
+DrizzleContextRepository ..> PersistenceMapper : envelopes <-> domain
+PersistenceMapper --> FinancialCryptoGateway : encrypt / authorized decrypt
+SqlSnapshotQueryAdapter --> FinancialCryptoGateway : authorized decrypt
+PostgresOutboxAdapter --> FinancialCryptoGateway : encrypted payload
+JobRunner --> FinancialCryptoGateway : authorized job payload
+OutboxDispatcher ..> PostgresOutboxAdapter : claim SKIP LOCKED
+OutboxDispatcher ..> JobQueuePort : enqueue job ID
+SignedJobEndpoint --> JobRunner : verify signature / atomic claim
+JobRunner ..> OutboxPort : versioned events after work
+package "PostgreSQL logical records (TARGET, not migrations)" {
+  entity ContextBusinessRow {
+    id: UUID
+    workspace_id: UUID
+    created_at: timestamptz
+    updated_at: timestamptz
+    version: integer
+    encrypted_payload: EncryptedEnvelope
+  }
+  entity ImmutableFact {
+    id: UUID
+    workspace_id: UUID
+    recorded_at: timestamptz
+    encrypted_payload: EncryptedEnvelope
+  }
+  entity OutboxEvent {
+    event_id: UUID
+    workspace_id: UUID
+    routing_type: generic opaque code
+    schema_version: integer
+    aggregate_id: UUID
+    emitted_at: technical timestamptz
+    correlation_id: string
+    causation_id: string
+    payload: EncryptedEnvelope
+    processing_state: string
+  }
+  entity InboxConsumption {
+    event_id: UUID
+    handler_name: generic opaque code
+    consumed_at: timestamptz
+    UNIQUE(event_id, handler_name)
+  }
+  entity DurableJob {
+    job_id: UUID
+    workspace_id: UUID
+    status: queued / running / succeeded / failed / dead
+    attempts: integer
+    next_retry_at: timestamptz
+    heartbeat_at: timestamptz
+    checkpoint: opaque cursor
+    deduplication_key: opaque keyed fingerprint
+  }
+  entity IdempotencyResult {
+    workspace_id: UUID
+    actor_id: UUID
+    scope: generic opaque code
+    key_hash: string
+    request_mac: keyed HMAC
+    encrypted_response: EncryptedEnvelope
+    UNIQUE(workspace_id, actor_id, scope, key_hash)
+  }
+  entity ProjectionRecord {
+    workspace_id: UUID
+    encrypted_payload: EncryptedEnvelope
+    technical_version: integer
+  }
+}
+DrizzleContextRepository --> ContextBusinessRow
+DrizzleContextRepository --> ImmutableFact
+PostgresUnitOfWork ..> IdempotencyResult
+PostgresOutboxAdapter --> OutboxEvent
+JobRunner --> InboxConsumption : atomic with consumer effects
+JobRunner --> DurableJob
+SqlSnapshotQueryAdapter --> ProjectionRecord
+note bottom of ContextBusinessRow
+  Per-context tables/schemas, not one shared business table.
+  Tenant predicates + tenant-safe references are mandatory.
+  Interface/API/worker are composition roots; domain imports no adapter.
+  Reference catalog exceptions need explicit policy.
+end note
+note bottom of DurableJob
+  Queue payload = job ID/signed envelope, not financial records.
+  Bounded retry, checkpoint, dead-letter state and deduplication.
+  QStash is a documented pilot candidate, not an installed adapter.
+end note
+note bottom of ProjectionRecord
+  Rebuild through stable source contracts; no cross-context domain SQL.
+  Private business fields/lineage stay in encrypted payloads, never raw numeric.
+  Decrypt and compute exact Decimal/Money only in authorized trusted memory.
+  No plaintext financial SQL views/aggregates; route records by generic metadata.
+  Logical record names here do not authorize subtype-revealing physical storage.
+  Outbox/inbox/queues/projections here are proposed, not implemented.
+end note
+@enduml

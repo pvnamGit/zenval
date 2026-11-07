@@ -6,3 +6,5 @@ financial/security risk, or is unlikely to finish in one short session. Copy `TE
 
 Plans are resumable state, not status theatre. Keep acceptance checks, progress, decisions,
 observations, and remaining risks current. Small local changes can use an ephemeral plan.
+
+For task completion and durable handoffs, follow [task status and handoff memory](../agent-harness/task-memory.md). Keep partial steps distinct from completion of the parent task.

@@ -1,0 +1,13 @@
+# PostgreSQL-backed dashboard handoff
+
+Status: partial; [plan](../exec-plans/active/2026-11-07-postgresql-dashboard.md) and [T10–T20](../spec-kit/tasks.md) remain open.
+
+The user selected multi-user login and workspace isolation. The API now owns a PostgreSQL client when `DATABASE_URL` is set and exposes `GET /v1/health/ready`: `200` after `SELECT 1`, otherwise `503` without database error details. The client closes on shutdown. This is readiness infrastructure only; the demo dashboard and demo data remain, and no real financial data or login has been implemented.
+
+Focused API typecheck, 14 tests, API build, scoped Biome check, and `pnpm harness:validate` passed. `pnpm harness:full` failed at repository formatting in existing `.agent/skills/impeccable/` files; Node 25.9.0 is outside the supported range. An independent reviewer requested additional service tests and malformed URL handling; these were added.
+
+The user switched to local PostgreSQL. Root `.env` is Git-ignored and loaded by the API `dev` and `start` scripts; no credentials are recorded here. An opt-in read-only PostgreSQL integration test and an API startup/readiness smoke test both passed against the configured database. A read-only inspection found no application tables. A fresh checker returned PASS for the readiness slice, but the overall objective remains open. Identity, authorization, Ledger application posting, account storage, dashboard projections, financial decisions and approvals remain necessary. No task or human acceptance is claimed.
+
+After the user authorized continuation, migrations `0001` and `0002` were applied to the local database using a transaction and checksum-tracked runner; a second run applied zero changes. PostgreSQL integration tests passed for rollback, replay, checksums, advisory lock contention, and workspace foreign-key isolation. Independent review passed these migrations for local application. The home overview now displays an unavailable state instead of demo figures; the remaining demo capture and plan are labeled. Scoped web review passed, but browser visual/interaction checks were unavailable. A synthetic in-memory Better Auth signup/session spike ran only in a temporary directory; real authentication has not been built.
+
+Focused database and web checks passed; `pnpm harness:full` remains blocked by 113 existing format errors in `.agent/skills/impeccable`. Continue with the repository's identity spike and security decisions, workspace authorization, Ledger application posting, accounts and real dashboard projections. The dashboard objective is not complete.

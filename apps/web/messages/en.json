@@ -1,0 +1,326 @@
+{
+  "common": {
+    "appName": "Zenval",
+    "tagline": "Calm numbers. Clear decisions.",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "viewAll": "View all",
+    "comingSoon": "Coming soon",
+    "loading": "Loading…",
+    "all": "All",
+    "noPnl": "No income/expense impact",
+    "explain": "Explain this number",
+    "back": "Back"
+  },
+  "nav": {
+    "home": "Overview",
+    "transactions": "Transactions",
+    "accounts": "Accounts",
+    "review": "To review",
+    "plan": "Plan",
+    "debts": "Debts & loans",
+    "investments": "Investments",
+    "reports": "Reports",
+    "settings": "Settings",
+    "more": "More",
+    "primary": "Primary navigation",
+    "skipToContent": "Skip to content"
+  },
+  "shell": {
+    "quickAdd": "Quick add",
+    "search": "Search",
+    "searchPlaceholder": "Go to screen…",
+    "noResults": "No results",
+    "toggleTheme": "Toggle light/dark theme",
+    "sampleMode": "Sample data mode"
+  },
+  "provenance": {
+    "source": "Source",
+    "asOf": "As of",
+    "version": "Calculation",
+    "sample": "Sample data",
+    "sampleHint": "This screen uses sample data until its API is available."
+  },
+  "errors": {
+    "title": "Couldn't load data",
+    "network": "Can't reach the server. Check your connection and try again.",
+    "invalidResponse": "The server response did not match the API contract. Please report it.",
+    "notImplemented": "This feature is not available on the server yet.",
+    "generic": "Something went wrong. Please try again.",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The link may have changed or no longer exists.",
+    "goHome": "Back to overview"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "greeting": "Hello",
+    "safeToSpend": "Safe to spend",
+    "safeToSpendHint": "What you can spend while still covering upcoming commitments.",
+    "horizon": "Horizon",
+    "projectedLow": "Projected lowest balance",
+    "confidence": "Confidence",
+    "confidenceMedium": "Medium",
+    "scenarioBase": "Base scenario",
+    "netWorth": "Net worth",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "dueSoon": "Due soon",
+    "dueSoonEmpty": "Nothing due soon.",
+    "reviewInbox": "Review inbox",
+    "reviewCount": "{count, plural, =0 {All tidy} one {# item needs your confirmation} other {# items need your confirmation}}",
+    "openReview": "Open review inbox",
+    "recent": "Recent transactions",
+    "debtInstallment": "Debt payment",
+    "expense": "Expense",
+    "forecast": "Forecast"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Income, expenses, and transfers between your accounts.",
+    "searchLabel": "Search transactions",
+    "searchPlaceholder": "Name, category…",
+    "kind": "Type",
+    "status": "Status",
+    "account": "Account",
+    "allAccounts": "All accounts",
+    "kinds": {
+      "expense": "Expense",
+      "income": "Income",
+      "transfer": "Transfer"
+    },
+    "statuses": {
+      "posted": "Posted",
+      "expected": "Expected",
+      "draft": "Draft"
+    },
+    "empty": "No transactions match these filters.",
+    "emptyAll": "No transactions yet. Start with Quick add.",
+    "today": "Today",
+    "count": "{count, plural, one {# transaction} other {# transactions}}",
+    "uncategorized": "Uncategorized",
+    "draftNote": "Draft in this session — not posted"
+  },
+  "quickAdd": {
+    "title": "Quick add",
+    "description": "Creates a draft. A draft is not a posted ledger entry.",
+    "amount": "Amount",
+    "amountPlaceholder": "0",
+    "category": "Category",
+    "from": "From account",
+    "to": "To account",
+    "account": "Account",
+    "submit": "Save draft",
+    "submitting": "Saving…",
+    "success": "Draft saved",
+    "replayed": "This draft was already saved",
+    "transferNote": "Transfers between your own accounts are not income or expense.",
+    "errors": {
+      "amount": "Enter an amount greater than 0.",
+      "destination": "Choose a destination different from the source.",
+      "category": "Choose a category."
+    },
+    "categories": {
+      "food": "Food & drink",
+      "transport": "Transport",
+      "shopping": "Shopping",
+      "bills": "Bills",
+      "health": "Health",
+      "entertainment": "Entertainment",
+      "salary": "Salary",
+      "bonus": "Bonus",
+      "otherIncome": "Other income"
+    }
+  },
+  "accounts": {
+    "title": "Accounts",
+    "description": "Balances by account, wallet, and savings deposit.",
+    "totalAssets": "Total cash in accounts",
+    "kinds": {
+      "bank": "Bank",
+      "savings": "Savings",
+      "wallet": "E-wallet"
+    },
+    "reconciled": "Reconciled",
+    "manual": "Manually updated",
+    "balance": "Balance",
+    "activity": "Activity",
+    "noActivity": "No transactions for this account yet.",
+    "notFound": "Account not found."
+  },
+  "review": {
+    "title": "To review",
+    "description": "Confirm uncertain items before they affect your numbers.",
+    "buckets": {
+      "review": "To review",
+      "pending": "Pending",
+      "posted": "Posted"
+    },
+    "kinds": {
+      "transfer": "Transfer",
+      "duplicate": "Possible duplicate",
+      "variance": "Variance",
+      "expected": "Expected",
+      "expense": "Expense"
+    },
+    "approve": "Confirm",
+    "approveDuplicate": "Merge duplicate",
+    "dismiss": "Dismiss",
+    "approved": "Confirmed",
+    "dismissed": "Dismissed",
+    "empty": "Nothing left here.",
+    "pnlUnknown": "Income/expense impact: awaiting confirmation",
+    "pnlYes": "Counts toward income/expense"
+  },
+  "plan": {
+    "title": "Plan",
+    "description": "Fixed commitments and goals. Plans never move money by themselves.",
+    "monthCommitted": "Committed this month",
+    "monthPaid": "Paid",
+    "commitments": "Fixed commitments",
+    "goals": "Goals",
+    "cadence": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "due": "Due",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "skipped": "Skipped"
+    },
+    "kinds": {
+      "fixed-expense": "Fixed expense",
+      "debt-installment": "Debt payment",
+      "saving": "Saving",
+      "income": "Income"
+    },
+    "priority": {
+      "essential": "Essential",
+      "flexible": "Flexible"
+    },
+    "pnl": {
+      "full": "Counts as expense",
+      "interest-only": "Only interest & fees are expenses",
+      "none": "No income/expense impact"
+    },
+    "tolerance": "Tolerance ±{amount}",
+    "goalStatus": {
+      "active": "Active",
+      "paused": "Paused",
+      "achieved": "Achieved"
+    },
+    "contributed": "Contributed",
+    "target": "Target",
+    "targetDate": "By",
+    "linkedTo": "Linked to"
+  },
+  "debts": {
+    "title": "Debts & loans",
+    "description": "Principal is a balance-sheet movement, not income or expense.",
+    "totalPayable": "You owe",
+    "totalReceivable": "Owed to you",
+    "expectedRecoverable": "Expected to recover",
+    "payables": "Borrowed",
+    "receivables": "Lent",
+    "outstanding": "Outstanding principal",
+    "original": "Original principal",
+    "rate": "{rate} p.a.",
+    "repaid": "{percent} repaid",
+    "nextInstallment": "Next installment",
+    "principal": "Principal",
+    "interest": "Interest",
+    "fee": "Fee",
+    "total": "Total",
+    "pnlNote": "Only interest and fees count as expenses.",
+    "recovery": "{percent} recovery likelihood",
+    "status": {
+      "active": "Active",
+      "overdue": "Overdue",
+      "settled": "Settled"
+    },
+    "empty": "Nothing here."
+  },
+  "investments": {
+    "title": "Investments",
+    "description": "Market value, cost basis, and unrealized gain/loss.",
+    "marketValue": "Market value",
+    "costBasis": "Cost basis",
+    "unrealized": "Unrealized gain/loss",
+    "allocation": "Allocation",
+    "holdings": "Holdings",
+    "activity": "Recent activity",
+    "quantity": "Qty {quantity}",
+    "price": "Price",
+    "stale": "Stale price",
+    "manualPrice": "Manual price",
+    "providerPrice": "Provider price",
+    "assetClass": {
+      "equity": "Equity",
+      "fund": "Fund",
+      "gold": "Gold",
+      "crypto": "Crypto",
+      "bond": "Bond"
+    },
+    "activityKind": {
+      "buy": "Buy",
+      "sell": "Sell",
+      "dividend": "Dividend",
+      "valuation": "Valuation"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "Monthly income and expense, net worth, and spending mix.",
+    "cashflow": "Income and expense by month",
+    "income": "Income",
+    "expense": "Expense",
+    "net": "Net",
+    "month": "Month",
+    "netWorth": "Net worth",
+    "spending": "Spending mix",
+    "spendingNote": "Loan principal is not an expense; only interest is counted.",
+    "tableCaption": "Data table"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Display preferences are saved on this device.",
+    "display": "Display",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "system": "Use device setting",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "timezone": "Time zone",
+    "timezoneDevice": "Device ({zone})",
+    "data": "Your data",
+    "export": "Export data",
+    "exportHint": "A machine-readable bundle with schema and version.",
+    "delete": "Delete account & data",
+    "deleteHint": "Shows deletion scope and legal retention exceptions before you confirm.",
+    "connection": "API connection",
+    "mode": "Mode",
+    "baseUrl": "API base URL",
+    "modules": "Source per module",
+    "modeMock": "Sample data (mock)",
+    "modeHttp": "HTTP API"
+  },
+  "auth": {
+    "title": "Sign in to Zenval",
+    "subtitle": "A clear, private picture of your personal finances.",
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "continue": "Continue with email",
+    "privacy": "Zenval never sells financial data and never executes transactions for you.",
+    "demo": "Authentication is not connected yet; you will enter the sample workspace."
+  }
+}
+

@@ -11,20 +11,34 @@ hexagonal boundaries.
 
 - Node.js 24 LTS (`.nvmrc`)
 - pnpm 10
-- Docker (for local PostgreSQL)
+- PostgreSQL (local installation, or Docker if preferred)
 
 ## Start locally
 
 ```bash
 cp .env.example .env
+# Set DATABASE_URL in .env to your PostgreSQL connection string.
 pnpm install --frozen-lockfile
-pnpm dev:infra
+pnpm --filter @zenval/database build
+pnpm --filter @zenval/database migrate
 pnpm dev
 ```
 
 - Web: http://localhost:3000
 - API health: http://localhost:3001/v1/health
+- API PostgreSQL readiness: http://localhost:3001/v1/health/ready
 - Worker health: http://localhost:3002/internal/health
+
+The API loads the root `.env` when started with its `dev` or `start` script. The readiness
+endpoint returns 503 if PostgreSQL is not configured or cannot be reached. To use the optional
+Docker service instead of an existing local PostgreSQL server, run `pnpm dev:infra` first and
+set `DATABASE_URL` accordingly.
+
+Migrations are applied in one transaction under a PostgreSQL advisory lock. Applied filenames and
+checksums are recorded in `zenval_meta.schema_migrations`; changing or removing an applied migration
+causes the command to stop. Add a new forward-only migration for later changes. Migration files
+must not contain transaction-control keywords; the runner controls the transaction and conservatively
+rejects those keywords even inside comments or string literals.
 
 ## Quality gates
 
