@@ -13,4 +13,3 @@ export function isLocale(value: unknown): value is Locale {
 export function intlLocale(locale: Locale): string {
   return locale === "vi" ? "vi-VN" : "en-US";
 }
-

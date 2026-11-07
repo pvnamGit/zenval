@@ -47,4 +47,3 @@ Mutations send `X-Idempotency-Key`; one key is generated per user intent and reu
 - The UI does not calculate financial figures. Derived values come from the API with source,
   `asOf`, and calculation version, rendered via `<Provenance>`.
 - Transfers and debt principal are labeled as having no income/expense impact.
-

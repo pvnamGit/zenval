@@ -21,4 +21,3 @@ export const incomeCategories = [
 export type CategoryKey =
   | (typeof expenseCategories)[number]["key"]
   | (typeof incomeCategories)[number]["key"];
-

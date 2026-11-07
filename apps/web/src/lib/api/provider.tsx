@@ -46,4 +46,3 @@ export function useApi(): ZenvalApiClient {
   if (!api) throw new Error("useApi must be used inside <ApiProvider>");
   return api;
 }
-

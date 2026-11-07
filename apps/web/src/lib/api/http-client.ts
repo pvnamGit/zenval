@@ -128,4 +128,3 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       }),
   };
 }
-

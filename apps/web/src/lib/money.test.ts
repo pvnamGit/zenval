@@ -79,4 +79,3 @@ describe("ratio helpers", () => {
     expect(maxAbsolute([])).toBeNull();
   });
 });
-

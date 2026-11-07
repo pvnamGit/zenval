@@ -15,4 +15,3 @@ fails on pre-existing format/lint issues in vendored skill files, `design/`, and
 
 Next: browser verification on desktop/mobile/dark mode and keyboard, decide whether quick add should
 call the demo API again, then request human acceptance.
-

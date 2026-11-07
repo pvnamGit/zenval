@@ -62,4 +62,3 @@ export type ZenvalApiClient = ZenvalApi & {
   /** Which adapter serves each module, so the UI can label sample data honestly. */
   readonly sources: Readonly<Record<ApiModule, ApiSource>>;
 };
-

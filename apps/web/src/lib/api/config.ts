@@ -14,4 +14,3 @@ export const apiConfig = {
   /** Simulated latency for the mock adapter so loading states stay visible during development. */
   mockLatencyMs: Number.parseInt(process.env.NEXT_PUBLIC_API_MOCK_LATENCY_MS ?? "350", 10) || 0,
 } as const;
-
