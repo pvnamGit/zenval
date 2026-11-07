@@ -17,6 +17,8 @@ linked repository files and keep this map short.
 6. If an ADLC ticket is active, its accepted spec, scope, rails, and evidence take precedence over
    an informal plan. Never weaken frozen rails to make a change pass.
 
+To choose the next task, read [the agent execution order](docs/backlog/EXECUTION.md) and verify live issue/dependency evidence before starting. Queue rank does not override accepted ADLC rails or human gates.
+
 ## Product invariants
 
 - Money is never represented with binary floating point.

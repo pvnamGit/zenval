@@ -11,3 +11,5 @@ Nguồn: [PRD](../PRD.md), [Features](../FEATURES.md), [Architecture](../ARCHITE
 Cách dùng: review quyết định mở → chọn một lát cắt theo dependency → tạo ticket/spec/rails ADLC và plan theo harness → thực hiện, kiểm thử, review độc lập → xin phê duyệt bắt buộc. Checkbox trong backlog biểu thị việc cần làm, không biểu thị tiến độ hiện tại. Ưu tiên M/S/C và phase lấy từ bảng FR của Features; các mục roadmap chưa có FR vẫn cần xác nhận scope.
 
 GitHub backlog: [Project 4](https://github.com/users/pvnamGit/projects/4) và [roadmap/task-spec index #6](https://github.com/pvnamGit/zenval/issues/6). [Reconciliation snapshot](../backlog/README.md) lưu mapping Txx → issue; trạng thái live đọc từ GitHub, không suy từ thứ tự task hay từ checkbox trong tài liệu.
+
+Để agent chọn việc tiếp theo theo codebase hiện tại, dùng [execution order](../backlog/EXECUTION.md) và [ranked queue](../backlog/execution-order.json), kiểm tra lại accepted dependencies trước implementation.

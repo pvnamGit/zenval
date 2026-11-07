@@ -1,0 +1,90 @@
+name: Task lifecycle
+
+# PR opened/ready  -> linked issues move to "In review"
+# PR merged        -> linked issues are closed and moved to "Done"
+# Worktree cleanup is local: run `pnpm task:cleanup` (an Action cannot delete your local worktree).
+#
+# Project board updates need a token that can write user Projects v2: add repo secret
+# PROJECT_TOKEN (classic PAT with `project` + `repo` scopes). Without it, only issue closing runs.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_REPO: ${{ github.repository }}
+      PROJECT_OWNER: ${{ github.repository_owner }}
+      PROJECT_NUMBER: "4"
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      MERGED: ${{ github.event.pull_request.merged }}
+      ACTION: ${{ github.event.action }}
+      IS_DRAFT: ${{ github.event.pull_request.draft }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/task
+            docs/backlog/execution-order.json
+          persist-credentials: false
+
+      - name: Resolve linked issues
+        id: issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          nums="$(gh pr view "$PR_NUMBER" --json closingIssuesReferences \
+            -q '.closingIssuesReferences[].number' | tr '\n' ' ')"
+          echo "numbers=$nums" >> "$GITHUB_OUTPUT"
+          echo "Linked issues: ${nums:-none}"
+
+      - name: Move to In review
+        if: env.ACTION != 'closed' && env.IS_DRAFT != 'true' && steps.issues.outputs.numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          NUMBERS: ${{ steps.issues.outputs.numbers }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::warning::PROJECT_TOKEN not set; skipping board update"; exit 0; }
+          source scripts/task/lib.sh
+          for n in $NUMBERS; do set_status "$n" "In review"; done
+
+      - name: Close issues and move to Done
+        if: env.ACTION == 'closed' && env.MERGED == 'true' && steps.issues.outputs.numbers != ''
+        env:
+          NUMBERS: ${{ steps.issues.outputs.numbers }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          for n in $NUMBERS; do
+            GH_TOKEN="${{ github.token }}" gh issue close "$n" --reason completed \
+              --comment "Closed by merged PR #$PR_NUMBER."
+          done
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "::warning::PROJECT_TOKEN not set; skipping board update"; exit 0
+          fi
+          export GH_TOKEN="$PROJECT_TOKEN"
+          source scripts/task/lib.sh
+          for n in $NUMBERS; do set_status "$n" "Done"; done
+
+
+      - name: Report tasks that can now run in parallel
+        if: env.ACTION == 'closed' && env.MERGED == 'true' && env.PROJECT_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          # Issue closing/board updates above have landed; list Ready tasks with no open blockers/deps.
+          {
+            echo "### Parallel-eligible tasks (Ready, no open blockers or dependencies)"
+            list="$(bash scripts/task/ready.sh)"
+            if [ -n "$list" ]; then echo '```'; echo "$list"; echo '```'; else echo "None."; fi
+            echo "Start locally: \`pnpm task:start-ready\`"
+          } >> "$GITHUB_STEP_SUMMARY"
