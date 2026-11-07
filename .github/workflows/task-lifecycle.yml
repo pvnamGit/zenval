@@ -74,7 +74,6 @@ jobs:
           source scripts/task/lib.sh
           for n in $NUMBERS; do set_status "$n" "Done"; done
 
-
       - name: Report tasks that can now run in parallel
         if: env.ACTION == 'closed' && env.MERGED == 'true' && env.PROJECT_TOKEN != ''
         env:
