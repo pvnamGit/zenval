@@ -1,11 +1,11 @@
 # Task lifecycle automation
 
-| Step | How | Where |
-| --- | --- | --- |
-| Pick task → **In progress**, new worktree from `origin/main` | `pnpm task:start <issue> [prefix]` | local, `scripts/task/start.sh` → `.worktrees/<issue>-<slug>` |
-| PR opened/ready → **In review** | automatic | `.github/workflows/task-lifecycle.yml` |
-| PR merged → close issue, **Done** | automatic (needs `Closes #N` in PR body) | same workflow |
-| Delete worktree + local branch | `pnpm task:cleanup [--dry-run]` | local, `scripts/task/cleanup.sh` |
+| Step                                                         | How                                      | Where                                                        |
+| ------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------ |
+| Pick task → **In progress**, new worktree from `origin/main` | `pnpm task:start <issue> [prefix]`       | local, `scripts/task/start.sh` → `.worktrees/<issue>-<slug>` |
+| PR opened/ready → **In review**                              | automatic                                | `.github/workflows/task-lifecycle.yml`                       |
+| PR merged → close issue, **Done**                            | automatic (needs `Closes #N` in PR body) | same workflow                                                |
+| Delete worktree + local branch                               | `pnpm task:cleanup [--dry-run]`          | local, `scripts/task/cleanup.sh`                             |
 
 Setup once: add repo secret `PROJECT_TOKEN` (classic PAT, scopes `project` + `repo`) so the workflow can
 edit the "Zenval Board" user project. Without it, issues are still closed but the board is not updated.
