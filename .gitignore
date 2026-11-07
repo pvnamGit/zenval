@@ -10,6 +10,12 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
+.pnpm-store/
+.worktrees/
+tmp/
+.impeccable/config.local.json
+.impeccable/live/
+.impeccable/build/
 
 # ADLC runtime
 .adlc/*
