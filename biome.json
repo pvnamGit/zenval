@@ -7,7 +7,10 @@
       "!!**/.turbo",
       "!!**/coverage",
       "!!**/dist",
-      "!!**/pnpm-lock.yaml"
+      "!!**/pnpm-lock.yaml",
+      "!!.agents/skills/design-taste-frontend",
+      "!!.agents/skills/impeccable",
+      "!!.agents/skills/react-expert"
     ]
   },
   "formatter": {

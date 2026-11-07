@@ -90,4 +90,3 @@ describe("transaction list helpers", () => {
     expect(groupByDay(server).map((group) => group.items.length)).toEqual([1, 1]);
   });
 });
-

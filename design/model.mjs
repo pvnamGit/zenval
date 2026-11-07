@@ -166,11 +166,7 @@ export function formatVndInput(raw) {
   if (!trimmed) return "";
   if (!/^[+−-]?\d[\d. ]*$/.test(trimmed)) return value;
   const sign =
-    trimmed.startsWith("-") || trimmed.startsWith("−")
-      ? "−"
-      : trimmed.startsWith("+")
-        ? "+"
-        : "";
+    trimmed.startsWith("-") || trimmed.startsWith("−") ? "−" : trimmed.startsWith("+") ? "+" : "";
   const digits = trimmed
     .replace(/^[+−-]/, "")
     .replace(/[. ]/g, "")

@@ -24,4 +24,3 @@ export function useQuickAdd(): QuickAddContextValue {
   if (!value) throw new Error("useQuickAdd must be used inside <QuickAddProvider>");
   return value;
 }
-

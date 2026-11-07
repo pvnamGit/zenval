@@ -15,4 +15,3 @@ export function createZenvalApi(config: typeof apiConfig = apiConfig): ZenvalApi
   });
   return createHttpApi(client, mock);
 }
-

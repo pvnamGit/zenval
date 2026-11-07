@@ -68,4 +68,3 @@ export function getDemoSessionId(): string {
     return "ephemeral-demo-session";
   }
 }
-

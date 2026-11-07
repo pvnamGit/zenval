@@ -1437,8 +1437,7 @@ select:focus-visible,
   letter-spacing: -0.04em;
 }
 .type-display {
-  font:
-    750 28px var(--font-sans);
+  font: 750 28px var(--font-sans);
 }
 .type-title {
   margin-top: 4px;
